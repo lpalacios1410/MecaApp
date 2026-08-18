@@ -14,10 +14,11 @@ Lejos de un directorio estático tradicional, el sitio se siente como un **panel
 
 ## 📱 Previsualización de la Interfaz (UI)
 
-|     Versión Desktop (Panel de Configuración)     |        Versión Mobile (Onboarding)        |
-| :----------------------------------------------: | :---------------------------------------: |
-|    ![MecaApp Desktop Setup](image_08625e.jpg)    | ![MecaApp Mobile Flow](image_085f77.png)  |
-| _Vista ampliada para gestión de perfil y taller_ | _Flujo optimizado para pantallas móviles_ |
+| Versión Desktop (Panel de Configuración) |
+| :--------------------------------------: |
+
+| ![MecaApp Desktop Setup](https://github.com/lpalacios1410/MecaApp/blob/1ea9a24af456880cfd089575a494f0e52096147f/public/mecaApp.jpg)
+| _Vista ampliada para gestión de perfil y taller_ |
 
 ---
 
@@ -40,7 +41,7 @@ Lejos de un directorio estático tradicional, el sitio se siente como un **panel
 | -------------------- | ----------------------------------------------------------------------------- |
 | **Next.js 15**       | Framework React con App Router, SSR y Server Actions                          |
 | **Tailwind CSS 3.4** | Estilos atómicos y tokens de diseño personalizados (`tailwind.config.ts`)     |
-| **HeroUI (NextUI)**  | Librería de componentes accesibles para UI (_Cards, Chips, Switches, Modals_) |
+| **Shadcn (NextJS)**  | Librería de componentes accesibles para UI (_Cards, Chips, Switches, Modals_) |
 | **Supabase**         | Backend-as-a-Service (PostgreSQL, Supabase Auth y Row Level Security)         |
 | **TypeScript**       | Tipado estricto en toda la aplicación y esquemas de base de datos             |
 | **Lucide React**     | Conjunto de íconos                                                            |
