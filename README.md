@@ -14,10 +14,9 @@ Lejos de un directorio estático tradicional, el sitio se siente como un **panel
 
 ## 📱 Previsualización de la Interfaz (UI)
 
-| Versión Desktop (Panel de Configuración) |
-| :--------------------------------------: |
-
-| ![MecaApp Desktop Setup](https://github.com/lpalacios1410/MecaApp/blob/1ea9a24af456880cfd089575a494f0e52096147f/public/mecaApp.jpg)
+|     Versión Desktop (Panel de Configuración)     |
+| :----------------------------------------------: | 
+|    ![MecaApp Desktop Setup](https://github.com/lpalacios1410/MecaApp/blob/1ea9a24af456880cfd089575a494f0e52096147f/public/mecaApp.jpg)
 | _Vista ampliada para gestión de perfil y taller_ |
 
 ---
