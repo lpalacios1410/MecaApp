@@ -2,43 +2,46 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { z } from "zod";
-
-const registerSchema = z.object({
-  email: z.string().email("Email inválido"),
-  password: z.string().min(8, "Mínimo 8 caracteres"),
-});
 
 export async function register(formData: FormData) {
-  const values = {
-    email: formData.get("email"),
-    password: formData.get("password"),
-  };
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const fullName = formData.get("full_name") as string;
+  const role = formData.get("role") as string;
 
-  const result = registerSchema.safeParse(values);
+  if (!email || !email.includes("@")) {
+    return { error: "Email inválido." };
+  }
 
-  if (!result.success) {
-    return {
-      error: "Revisa el email y la contraseña.",
-    };
+  if (!password || password.length < 8) {
+    return { error: "La contraseña debe tener mínimo 8 caracteres." };
+  }
+
+  if (!fullName || fullName.trim().length < 2) {
+    return { error: "El nombre debe tener mínimo 2 caracteres." };
+  }
+
+  if (!role || !["user", "mechanic"].includes(role)) {
+    return { error: "Tipo de usuario inválido." };
   }
 
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signUp({
-    email: result.data.email,
-    password: result.data.password,
+    email,
+    password,
     options: {
-      emailRedirectTo:
-        `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+      data: {
+        full_name: fullName.trim(),
+        role,
+      },
     },
   });
 
   if (error) {
-    return {
-      error: error.message,
-    };
+    return { error: error.message };
   }
 
-  redirect("/login?registered=true");
+  redirect("/auth/sign-up-success");
 }
