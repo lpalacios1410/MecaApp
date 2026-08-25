@@ -114,3 +114,24 @@ CREATE POLICY "Users can delete own vehicles"
 -- 10. Index para busquedas frecuentes
 CREATE INDEX idx_vehicles_user_id ON vehicles(user_id);
 CREATE INDEX idx_profiles_role ON profiles(role);
+
+-- 11. Policies para mecanicos (solo lectura)
+-- Mecanicos pueden ver todos los profiles
+CREATE POLICY "Mechanics can view all profiles"
+  ON profiles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'mechanic'
+    )
+  );
+
+-- Mecanicos pueden ver todos los vehiculos
+CREATE POLICY "Mechanics can view all vehicles"
+  ON vehicles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'mechanic'
+    )
+  );

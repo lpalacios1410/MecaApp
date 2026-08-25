@@ -8,19 +8,27 @@ import {
   LayoutDashboard,
   CreditCard,
   LogOut,
+  Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-const navigation = [
+const userNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Mis Vehículos", href: "/dashboard/vehicles", icon: Car },
   { name: "Planes", href: "/dashboard/plans", icon: CreditCard },
 ];
 
-export function DashboardSidebar() {
+const mechanicNavigation = [
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Clientes", href: "/dashboard/clients", icon: Users },
+];
+
+export function DashboardSidebar({ role }: { role: "user" | "mechanic" }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  const navigation = role === "mechanic" ? mechanicNavigation : userNavigation;
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -35,6 +43,9 @@ export function DashboardSidebar() {
           <Link href="/dashboard" className="text-xl font-bold text-primary">
             MecaApp
           </Link>
+          <span className="ml-2 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+            {role === "mechanic" ? "Mecánico" : "Usuario"}
+          </span>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
