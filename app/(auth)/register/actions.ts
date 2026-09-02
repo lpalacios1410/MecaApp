@@ -1,0 +1,54 @@
+"use server"
+
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+
+export async function signup(formData: FormData) {
+  const fullName = String(formData.get("fullName") ?? "").trim()
+  const email = String(formData.get("email") ?? "").trim()
+  const password = String(formData.get("password") ?? "")
+  const role = String(formData.get("role") ?? "client")
+
+  if (fullName.length < 3) {
+    redirect("/registro?error=Escribe tu nombre completo")
+  }
+
+  if (!email.includes("@")) {
+    redirect("/registro?error=Escribe un correo valido")
+  }
+
+  if (password.length < 8) {
+    redirect("/registro?error=La clave debe tener al menos 8 caracteres")
+  }
+
+  if (role !== "client" && role !== "mechanic") {
+    redirect("/registro?error=Tipo de usuario invalido")
+  }
+
+  const supabase = await createClient()
+  const headerList = await headers()
+
+  const origin =
+    headerList.get("origin") ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "http://localhost:3000"
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+        role,
+      },
+      emailRedirectTo: `${origin}/auth/confirm?next=/login`,
+    },
+  })
+
+  if (error) {
+    redirect(`/register?error=${encodeURIComponent(error.message)}`)
+  }
+
+  redirect("/login?message=Revisa tu correo para confirmar tu cuenta")
+}
