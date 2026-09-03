@@ -11,19 +11,19 @@ export async function signup(formData: FormData) {
   const role = String(formData.get("role") ?? "client")
 
   if (fullName.length < 3) {
-    redirect("/registro?error=Escribe tu nombre completo")
+    redirect("/register?error=Escribe tu nombre completo")
   }
 
   if (!email.includes("@")) {
-    redirect("/registro?error=Escribe un correo valido")
+    redirect("/register?error=Escribe un correo valido")
   }
 
   if (password.length < 8) {
-    redirect("/registro?error=La clave debe tener al menos 8 caracteres")
+    redirect("/register?error=La clave debe tener al menos 8 caracteres")
   }
 
   if (role !== "client" && role !== "mechanic") {
-    redirect("/registro?error=Tipo de usuario invalido")
+    redirect("/register?error=Tipo de usuario invalido")
   }
 
   const supabase = await createClient()
@@ -50,5 +50,5 @@ export async function signup(formData: FormData) {
     redirect(`/register?error=${encodeURIComponent(error.message)}`)
   }
 
-  redirect("/login?message=Revisa tu correo para confirmar tu cuenta")
+  redirect("/confirm-email?message=Revisa tu correo para confirmar tu cuenta")
 }
