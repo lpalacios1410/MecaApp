@@ -27,8 +27,8 @@ export interface ClientWithVehicles {
 
 async function getUserId() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const userId = data?.claims?.sub;
+  const { data } = await supabase.auth.getUser();
+  const userId = data?.user?.id;
 
   if (!userId) {
     throw new Error("No autenticado");
@@ -47,6 +47,22 @@ export async function getUserProfile(): Promise<UserProfile> {
     .single();
 
   if (error || !data) {
+    const { data: authUser } = await supabase.auth.getUser();
+    if (authUser?.user) {
+      await supabase.from("profiles").insert({
+        id: authUser.user.id,
+        email: authUser.user.email!,
+        full_name: authUser.user.user_metadata?.full_name || "",
+        role: authUser.user.user_metadata?.role || "user",
+      });
+
+      const { data: newData } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, role")
+        .eq("id", userId)
+        .single();
+      if (newData) return newData as UserProfile;
+    }
     throw new Error("Perfil no encontrado");
   }
 
@@ -85,7 +101,7 @@ export async function getUserVehiclesCount(): Promise<number> {
 }
 
 export async function getClientsWithVehicles(): Promise<{
-  clients: ClientWithVehicles[];
+  users: ClientWithVehicles[];
   total: number;
 }> {
   const { supabase } = await getUserId();
@@ -96,7 +112,7 @@ export async function getClientsWithVehicles(): Promise<{
     .eq("role", "user");
 
   if (profilesError || !profiles) {
-    return { clients: [], total: 0 };
+    return {users: [], total: 0 };
   }
 
   const { data: vehicles, error: vehiclesError } = await supabase
@@ -104,7 +120,7 @@ export async function getClientsWithVehicles(): Promise<{
     .select("*");
 
   if (vehiclesError || !vehicles) {
-    return { clients: [], total: 0 };
+    return {users: [], total: 0 };
   }
 
   const vehiclesByUser = new Map<string, Vehicle[]>();
@@ -114,12 +130,12 @@ export async function getClientsWithVehicles(): Promise<{
     vehiclesByUser.set(v.user_id, list);
   }
 
-  const clients: ClientWithVehicles[] = (profiles as UserProfile[]).map(
+  const users: ClientWithVehicles[] = (profiles as UserProfile[]).map(
     (profile) => ({
       client: profile,
       vehicles: vehiclesByUser.get(profile.id) || [],
     })
   );
 
-  return { clients, total: clients.length };
+  return {users, total:users.length };
 }

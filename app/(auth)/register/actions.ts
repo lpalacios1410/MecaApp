@@ -8,7 +8,7 @@ export async function signup(formData: FormData) {
   const fullName = String(formData.get("fullName") ?? "").trim()
   const email = String(formData.get("email") ?? "").trim()
   const password = String(formData.get("password") ?? "")
-  const role = String(formData.get("role") ?? "client")
+  const role = String(formData.get("role") ?? "user")
 
   if (fullName.length < 3) {
     redirect("/register?error=Escribe tu nombre completo")
@@ -42,7 +42,8 @@ export async function signup(formData: FormData) {
         full_name: fullName,
         role,
       },
-      emailRedirectTo: `${origin}/auth/confirm?next=/login`,
+      // emailRedirectTo: `${origin}/auth/confirm?next=/login`,
+      emailRedirectTo: `${origin}/auth/confirm?next=/auth/email-success`,
     },
   })
 

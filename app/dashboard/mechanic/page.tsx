@@ -13,7 +13,7 @@ import { connection } from "next/server";
 export default async function MechanicDashboardPage() {
   await connection();
   const profile = await getUserProfile();
-  const { clients, total } = await getClientsWithVehicles();
+  const { users, total } = await getClientsWithVehicles();
 
   return (
     <div className="space-y-8">
