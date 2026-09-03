@@ -1,5 +1,5 @@
 import { getUserProfile, getUserVehiclesCount } from "@/lib/supabase/helpers";
-import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { connection } from "next/server";
 
 export default async function DashboardLayout({

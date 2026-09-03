@@ -13,7 +13,7 @@ export async function createOrder(formData: FormData) {
   const clientNotes = String(formData.get("clientNotes") ?? "")
 
   if (!vehicleId || !planId) {
-    redirect("/dashboard/cliente/solicitar?error=Selecciona un vehículo y un plan")
+    redirect("/dashboard/client/solicitar?error=Selecciona un vehículo y un plan")
   }
 
   const supabase = await createClient()
@@ -27,9 +27,9 @@ export async function createOrder(formData: FormData) {
 
   if (error) {
     redirect(
-      `/dashboard/cliente/solicitar?error=${encodeURIComponent(error.message)}`
+      `/dashboard/client/solicitar?error=${encodeURIComponent(error.message)}`
     )
   }
 
-  redirect("/dashboard/cliente/ordenes?success=Orden creada correctamente")
+  redirect("/dashboard/client/ordenes?success=Orden creada correctamente")
 }

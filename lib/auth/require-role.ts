@@ -6,8 +6,8 @@ type Role = "client" | "mechanic"
 export async function requireRole(requiredRole: Role) {
   const supabase = await createClient()
 
-  const { data: claimsData } = await supabase.auth.getClaims()
-  const userId = claimsData?.claims?.sub
+  const { data } = await supabase.auth.getUser()
+  const userId = data?.user?.id
 
   if (!userId) {
     redirect("/login")
@@ -26,8 +26,8 @@ export async function requireRole(requiredRole: Role) {
   if (profile.role !== requiredRole) {
     const destination =
       profile.role === "mechanic"
-        ? "/dashboard/mecanico"
-        : "/dashboard/cliente"
+        ? "/dashboard/mechanic"
+        : "/dashboard/client"
 
     redirect(destination)
   }

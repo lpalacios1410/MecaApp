@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const profile = await getUserProfile();
 
   if (profile.role === "mechanic") {
-    const { clients, total } = await getClientsWithVehicles();
+    const { users, total } = await getClientsWithVehicles();
 
     return (
       <div className="space-y-8">

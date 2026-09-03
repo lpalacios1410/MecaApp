@@ -28,8 +28,8 @@ export async function login(formData: FormData) {
     .single()
 
   if (profile?.role === "mechanic") {
-    redirect("/dashboard/mecanico")
+    redirect("/dashboard/mechanic")
   }
 
-  redirect("/dashboard/cliente")
+  redirect("/dashboard/client")
 }
