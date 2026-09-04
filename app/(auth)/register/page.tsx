@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 
 export default function RegisterPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Crea tu cuenta en MecaAPP</CardTitle>
