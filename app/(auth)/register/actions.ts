@@ -22,7 +22,7 @@ export async function signup(formData: FormData) {
     redirect("/register?error=La clave debe tener al menos 8 caracteres")
   }
 
-  if (role !== "client" && role !== "mechanic") {
+  if (role !== "user" && role !== "mechanic") {
     redirect("/register?error=Tipo de usuario invalido")
   }
 

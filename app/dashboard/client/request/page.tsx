@@ -8,22 +8,22 @@ export default async function ClientRequestPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Request Service</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Solicitar Servicio</h2>
         <p className="text-muted-foreground">
-          Request a service for your vehicle
+          Solicita un servicio para tu vehículo
         </p>
       </div>
 
       {vehicles.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-muted-foreground mb-4">
-            You need to register a vehicle first before requesting a service.
+            Necesitas registrar un vehículo primero antes de solicitar un servicio.
           </p>
         </div>
       ) : (
         <div className="text-center py-12">
           <p className="text-muted-foreground">
-            Service request form coming soon.
+            Formulario de solicitud de servicio próximamente.
           </p>
         </div>
       )}

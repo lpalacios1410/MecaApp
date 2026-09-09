@@ -6,15 +6,15 @@ export default async function ClientOrdersPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">My Orders</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Mis Órdenes</h2>
         <p className="text-muted-foreground">
-          Track your service orders
+          Seguimiento de tus órdenes de servicio
         </p>
       </div>
 
       <div className="text-center py-12">
         <p className="text-muted-foreground">
-          Orders view coming soon.
+          Vista de órdenes próximamente.
         </p>
       </div>
     </div>

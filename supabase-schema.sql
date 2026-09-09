@@ -15,17 +15,17 @@ CREATE TABLE profiles (
 );
 
 -- 2. Tabla vehicles
+-- (Estructura real de la base de datos: client_id, notes, sin vehicle_type ni updated_at)
 CREATE TABLE vehicles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  vehicle_type TEXT NOT NULL CHECK (vehicle_type IN ('car', 'moto')),
+  client_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   plate TEXT NOT NULL,
   brand TEXT NOT NULL,
   model TEXT NOT NULL,
   year INTEGER NOT NULL,
   color TEXT,
+  notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(plate)
 );
 
@@ -41,11 +41,6 @@ $$ LANGUAGE plpgsql;
 -- 4. Triggers para updated_at
 CREATE TRIGGER update_profiles_updated_at
   BEFORE UPDATE ON profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_vehicles_updated_at
-  BEFORE UPDATE ON vehicles
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
@@ -94,25 +89,25 @@ CREATE POLICY "Users can insert own profile"
 -- Usuarios pueden ver sus propios vehiculos
 CREATE POLICY "Users can view own vehicles"
   ON vehicles FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = client_id);
 
 -- Usuarios pueden insertar sus propios vehiculos
 CREATE POLICY "Users can insert own vehicles"
   ON vehicles FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = client_id);
 
 -- Usuarios pueden actualizar sus propios vehiculos
 CREATE POLICY "Users can update own vehicles"
   ON vehicles FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = client_id);
 
 -- Usuarios pueden eliminar sus propios vehiculos
 CREATE POLICY "Users can delete own vehicles"
   ON vehicles FOR DELETE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = client_id);
 
 -- 10. Index para busquedas frecuentes
-CREATE INDEX idx_vehicles_user_id ON vehicles(user_id);
+CREATE INDEX idx_vehicles_client_id ON vehicles(client_id);
 CREATE INDEX idx_profiles_role ON profiles(role);
 
 -- 11. Policies para mecanicos (solo lectura)

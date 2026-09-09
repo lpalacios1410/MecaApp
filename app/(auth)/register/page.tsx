@@ -52,10 +52,10 @@ export default function RegisterPage() {
               <select
                 id="role"
                 name="role"
-                defaultValue="client"
+                defaultValue="user"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="client">Cliente</option>
+                <option value="user">Cliente</option>
                 <option value="mechanic">Mecánico</option>
               </select>
             </div>

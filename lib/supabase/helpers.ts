@@ -9,15 +9,14 @@ export interface UserProfile {
 
 export interface Vehicle {
   id: string;
-  user_id: string;
-  vehicle_type: "car" | "moto";
+  client_id: string;
   plate: string;
   brand: string;
   model: string;
   year: number;
   color: string | null;
+  notes: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface ClientWithVehicles {
@@ -75,7 +74,7 @@ export async function getUserVehicles(): Promise<Vehicle[]> {
   const { data, error } = await supabase
     .from("vehicles")
     .select("*")
-    .eq("user_id", userId)
+    .eq("client_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -91,7 +90,7 @@ export async function getUserVehiclesCount(): Promise<number> {
   const { count, error } = await supabase
     .from("vehicles")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
+    .eq("client_id", userId);
 
   if (error || count === null) {
     return 0;
@@ -125,9 +124,9 @@ export async function getClientsWithVehicles(): Promise<{
 
   const vehiclesByUser = new Map<string, Vehicle[]>();
   for (const v of vehicles as Vehicle[]) {
-    const list = vehiclesByUser.get(v.user_id) || [];
+    const list = vehiclesByUser.get(v.client_id) || [];
     list.push(v);
-    vehiclesByUser.set(v.user_id, list);
+    vehiclesByUser.set(v.client_id, list);
   }
 
   const users: ClientWithVehicles[] = (profiles as UserProfile[]).map(

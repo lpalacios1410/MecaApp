@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 import { requireRole } from "@/lib/auth/require-role"
 
 export async function createOrder(formData: FormData) {
-  await requireRole("client")
+  await requireRole("user")
 
   const vehicleId = String(formData.get("vehicleId") ?? "")
   const planId = String(formData.get("planId") ?? "")
@@ -13,7 +13,7 @@ export async function createOrder(formData: FormData) {
   const clientNotes = String(formData.get("clientNotes") ?? "")
 
   if (!vehicleId || !planId) {
-    redirect("/dashboard/client/solicitar?error=Selecciona un vehículo y un plan")
+    redirect("/dashboard/client/request?error=Selecciona un vehículo y un plan")
   }
 
   const supabase = await createClient()
@@ -27,9 +27,9 @@ export async function createOrder(formData: FormData) {
 
   if (error) {
     redirect(
-      `/dashboard/client/solicitar?error=${encodeURIComponent(error.message)}`
+      `/dashboard/client/request?error=${encodeURIComponent(error.message)}`
     )
   }
 
-  redirect("/dashboard/client/ordenes?success=Orden creada correctamente")
+  redirect("/dashboard/client/orders?success=Orden creada correctamente")
 }

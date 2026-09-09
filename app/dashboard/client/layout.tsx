@@ -5,7 +5,7 @@ export default async function ClientDashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  await requireRole("client")
+  await requireRole("user")
 
   return <>{children}</>
 }

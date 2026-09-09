@@ -27,15 +27,15 @@ export default async function ClientVehiclesPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">My Vehicles</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Mis Vehículos</h2>
           <p className="text-muted-foreground">
-            Manage your registered vehicles
+            Gestiona tus vehículos registrados
           </p>
         </div>
         <Link href="/dashboard/client/vehicles/new">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Add Vehicle
+            Agregar Vehículo
           </Button>
         </Link>
       </div>
@@ -44,12 +44,12 @@ export default async function ClientVehiclesPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground mb-4">
-              You have no registered vehicles
+              No tienes vehículos registrados
             </p>
             <Link href="/dashboard/client/vehicles/new">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Register First Vehicle
+                Registrar Primer Vehículo
               </Button>
             </Link>
           </CardContent>
@@ -81,11 +81,9 @@ export default async function ClientVehiclesPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-muted-foreground space-y-1">
-                  <p>
-                    Type: {vehicle.vehicle_type === "car" ? "Car" : "Motorcycle"}
-                  </p>
-                  <p>Year: {vehicle.year}</p>
+                  <p>Año: {vehicle.year}</p>
                   {vehicle.color && <p>Color: {vehicle.color}</p>}
+                  {vehicle.notes && <p>Notas: {vehicle.notes}</p>}
                 </div>
               </CardContent>
             </Card>
