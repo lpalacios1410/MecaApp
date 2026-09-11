@@ -14,16 +14,21 @@ import { cn } from "@/lib/utils";
 interface PlanCardProps {
   plan: ServicePlan;
   showVehicleBadge: boolean;
+  showAction?: boolean;
 }
 
-export function PlanCard({ plan, showVehicleBadge }: PlanCardProps) {
+export function PlanCard({
+  plan,
+  showVehicleBadge,
+  showAction = true,
+}: PlanCardProps) {
   const isCar = plan.vehicleType === "car";
 
   return (
     <Card
       className={cn(
         "flex flex-col",
-        plan.highlighted 
+        plan.highlighted && "ring-1 ring-primary/60"
       )}
     >
       <CardHeader>
@@ -62,11 +67,13 @@ export function PlanCard({ plan, showVehicleBadge }: PlanCardProps) {
             </li>
           ))}
         </ul>
-        <Link href="/dashboard/client/request" className="w-full">
-          <Button className="w-full bg-default border" >
-            Solicitar servicio
-          </Button>
-        </Link>
+        {showAction && (
+          <Link href="/dashboard/client/request" className="w-full">
+            <Button className="w-full bg-default border">
+              Solicitar servicio
+            </Button>
+          </Link>
+        )}
       </CardContent>
     </Card>
   );

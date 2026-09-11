@@ -2,9 +2,8 @@
 
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { getCurrentUser } from "@/lib/supabase/helpers"
+import { getCurrentUser, getPlanById } from "@/lib/supabase/helpers"
 import { requireRole } from "@/lib/auth/require-role"
-import { SERVICE_PLANS } from "@/lib/plans-data"
 
 export async function createOrder(formData: FormData) {
   await requireRole("user")
@@ -18,8 +17,8 @@ export async function createOrder(formData: FormData) {
     return { error: "Selecciona un mecánico, un vehículo y un plan." }
   }
 
-  const plan = SERVICE_PLANS.find((p) => p.id === planId)
-  if (!plan) {
+  const plan = await getPlanById(planId)
+  if (!plan || !plan.isActive) {
     return { error: "El plan seleccionado no es válido." }
   }
 

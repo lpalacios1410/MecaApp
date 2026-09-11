@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Bike, Car, Plus } from "lucide-react";
-import { getUserVehicles } from "@/lib/supabase/helpers";
-import { SERVICE_PLANS } from "@/lib/plans-data";
+import { getUserVehicles, getActivePlans } from "@/lib/supabase/helpers";
 import { updateVehicleType } from "../vehicles/actions";
 import { PlanCard } from "@/components/dashboard/plans/plan-card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,10 @@ function PageHeader({ subtitle }: { subtitle: string }) {
 
 export default async function ClientPlansPage() {
   await connection();
-  const vehicles = await getUserVehicles();
+  const [vehicles, plans] = await Promise.all([
+    getUserVehicles(),
+    getActivePlans(),
+  ]);
 
   if (vehicles.length === 0) {
     return (
@@ -115,8 +117,8 @@ export default async function ClientPlansPage() {
         ? "Planes para tu moto"
         : "Planes para tu carro";
 
-  const carPlans = SERVICE_PLANS.filter((p) => p.vehicleType === "car");
-  const motoPlans = SERVICE_PLANS.filter((p) => p.vehicleType === "motorcycle");
+  const carPlans = plans.filter((p) => p.vehicleType === "car");
+  const motoPlans = plans.filter((p) => p.vehicleType === "motorcycle");
 
   return (
     <div className="space-y-10">
