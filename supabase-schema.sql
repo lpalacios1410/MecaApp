@@ -169,6 +169,10 @@ CREATE POLICY "Clients can insert own orders"
   ON orders FOR INSERT
   WITH CHECK (auth.uid() = client_id);
 
+CREATE POLICY "Clients can delete own orders"
+  ON orders FOR DELETE
+  USING (auth.uid() = client_id);
+
 CREATE POLICY "Mechanics can view own orders"
   ON orders FOR SELECT
   USING (auth.uid() = mechanic_id);
