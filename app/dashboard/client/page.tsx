@@ -94,9 +94,14 @@ export default async function ClientDashboardPage() {
         </div>
       </div>
 
-      <div>
+      <div className="flex flex-wrap gap-4">
         <Link href="/dashboard/client/request">
           <Button size="lg">Solicitar Servicio</Button>
+        </Link>
+        <Link href="/dashboard/client/plans">
+          <Button size="lg" variant="outline">
+            Ver Planes
+          </Button>
         </Link>
       </div>
     </div>

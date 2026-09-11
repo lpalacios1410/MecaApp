@@ -8,7 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Car, Bike } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { connection } from "next/server";
 
 async function handleDeleteVehicle(formData: FormData) {
@@ -66,17 +67,34 @@ export default async function ClientVehiclesPage() {
                     </CardTitle>
                     <CardDescription>{vehicle.plate}</CardDescription>
                   </div>
-                  <form action={handleDeleteVehicle}>
-                    <input type="hidden" name="vehicleId" value={vehicle.id} />
-                    <Button
-                      type="submit"
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </form>
+                  <div className="flex items-center gap-2">
+                    {vehicle.vehicle_type === "car" && (
+                      <Badge variant="outline" className="gap-1">
+                        <Car className="h-3 w-3" />
+                        Carro
+                      </Badge>
+                    )}
+                    {vehicle.vehicle_type === "motorcycle" && (
+                      <Badge variant="outline" className="gap-1">
+                        <Bike className="h-3 w-3" />
+                        Moto
+                      </Badge>
+                    )}
+                    {!vehicle.vehicle_type && (
+                      <Badge variant="secondary">Sin clasificar</Badge>
+                    )}
+                    <form action={handleDeleteVehicle}>
+                      <input type="hidden" name="vehicleId" value={vehicle.id} />
+                      <Button
+                        type="submit"
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </form>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>

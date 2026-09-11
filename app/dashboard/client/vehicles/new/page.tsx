@@ -53,6 +53,23 @@ export default function NewVehiclePage() {
             )}
 
             <div className="space-y-2">
+              <Label htmlFor="vehicleType">Tipo de Vehículo</Label>
+              <select
+                id="vehicleType"
+                name="vehicleType"
+                required
+                defaultValue=""
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="" disabled>
+                  Selecciona el tipo
+                </option>
+                <option value="car">Carro</option>
+                <option value="motorcycle">Moto</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="plate">Placa</Label>
               <Input
                 id="plate"

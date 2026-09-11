@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export interface Vehicle {
   id: string;
@@ -12,6 +13,7 @@ export interface Vehicle {
   year: number;
   color: string | null;
   notes: string | null;
+  vehicle_type: "car" | "motorcycle" | null;
   created_at: string;
 }
 
@@ -74,6 +76,11 @@ export async function createVehicle(formData: FormData) {
   const year = formData.get("year") as string;
   const color = formData.get("color") as string;
   const notes = formData.get("notes") as string;
+  const vehicleType = formData.get("vehicleType") as string;
+
+  if (vehicleType !== "car" && vehicleType !== "motorcycle") {
+    return { error: "Selecciona el tipo de vehículo." };
+  }
 
   if (!plate || plate.trim().length < 3) {
     return { error: "La placa debe tener mínimo 3 caracteres." };
@@ -100,6 +107,7 @@ export async function createVehicle(formData: FormData) {
     year: yearNum,
     color: color?.trim() || null,
     notes: notes?.trim() || null,
+    vehicle_type: vehicleType,
   });
 
   if (error) {
@@ -110,4 +118,33 @@ export async function createVehicle(formData: FormData) {
   }
 
   redirect("/dashboard/client/vehicles");
+}
+
+export async function updateVehicleType(id: string, vehicleType: string) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "No autenticado." };
+  }
+
+  if (vehicleType !== "car" && vehicleType !== "motorcycle") {
+    return { error: "Tipo de vehículo inválido." };
+  }
+
+  const { error } = await supabase
+    .from("vehicles")
+    .update({ vehicle_type: vehicleType })
+    .eq("id", id)
+    .eq("client_id", user.id);
+
+  if (error) {
+    return { error: "Error al actualizar el tipo de vehículo." };
+  }
+
+  revalidatePath("/dashboard/client/plans");
+  revalidatePath("/dashboard/client/vehicles");
+
+  return { success: true };
 }

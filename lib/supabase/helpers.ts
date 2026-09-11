@@ -16,6 +16,7 @@ export interface Vehicle {
   year: number;
   color: string | null;
   notes: string | null;
+  vehicle_type: "car" | "motorcycle" | null;
   created_at: string;
 }
 

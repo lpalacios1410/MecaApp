@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { LogOut } from "lucide-react";
 import {
   Card,
@@ -36,9 +37,10 @@ export default function SignedOutPage() {
         <CardContent>
           <p className="text-sm text-muted-foreground">
             Si no eres redirigido, haz clic{" "}
-            <a href="/" className="text-primary underline">
+            <Link href="/" className="text-primary underline">
               aquí
-            </a>.
+            </Link>
+            .
           </p>
         </CardContent>
       </Card>

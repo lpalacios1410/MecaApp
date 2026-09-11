@@ -15,7 +15,11 @@ CREATE TABLE profiles (
 );
 
 -- 2. Tabla vehicles
--- (Estructura real de la base de datos: client_id, notes, sin vehicle_type ni updated_at)
+-- (Estructura real de la base de datos: client_id, notes, sin updated_at)
+-- Relación: un perfil (cliente) puede tener N vehículos (carros/motos);
+-- cada vehículo pertenece a un solo cliente (FK client_id) y una placa es
+-- única (UNIQUE(plate)), por lo que profiles no necesita campos extra.
+-- vehicle_type: NULL = sin clasificar, 'car' = carro, 'motorcycle' = moto
 CREATE TABLE vehicles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -25,6 +29,7 @@ CREATE TABLE vehicles (
   year INTEGER NOT NULL,
   color TEXT,
   notes TEXT,
+  vehicle_type TEXT CHECK (vehicle_type IN ('car', 'motorcycle')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(plate)
 );
