@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Car, LayoutDashboard, Wrench, LogOut, Menu, Toolbox, Sparkles } from "lucide-react";
+import { Car, LayoutDashboard, Wrench, LogOut, Menu, Toolbox, Sparkles, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -22,6 +22,7 @@ const navItemsByRole = {
     { href: "/dashboard/client", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/client/vehicles", label: "Mis Vehículos", icon: Car },
     { href: "/dashboard/client/plans", label: "Planes", icon: Sparkles },
+    { href: "/dashboard/client/orders", label: "Mis Órdenes", icon: ClipboardList },
   ],
   mechanic: [
     { href: "/dashboard/mechanic", label: "Dashboard Mechanic", icon: Toolbox },

@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { Bike, Car, Inbox } from "lucide-react";
 import { getClientOrders } from "@/lib/supabase/helpers";
 import { OrderStatusBadge } from "@/components/dashboard/orders/order-status-badge";
+import { DeleteOrderButton } from "@/components/dashboard/orders/delete-order-button";
 import {
   Card,
   CardContent,
@@ -59,7 +60,7 @@ export default async function ClientOrdersPage({
                   <OrderStatusBadge status={order.status} />
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col gap-4">
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <p className="flex items-center gap-2">
                     {order.vehicle_type === "motorcycle" ? (
@@ -85,6 +86,12 @@ export default async function ClientOrdersPage({
                       Tus notas: {order.client_notes}
                     </p>
                   )}
+                </div>
+                <div className="flex justify-end border-t border-border pt-3">
+                  <DeleteOrderButton
+                    orderId={order.id}
+                    planName={order.plan_name}
+                  />
                 </div>
               </CardContent>
             </Card>
