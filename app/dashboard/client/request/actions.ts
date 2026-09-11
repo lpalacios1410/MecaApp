@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { getCurrentUser } from "@/lib/supabase/helpers"
 import { requireRole } from "@/lib/auth/require-role"
 import { SERVICE_PLANS } from "@/lib/plans-data"
 
@@ -23,9 +24,7 @@ export async function createOrder(formData: FormData) {
   }
 
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getCurrentUser()
 
   if (!user) {
     return { error: "No autenticado." }

@@ -112,7 +112,8 @@ CREATE POLICY "Users can delete own vehicles"
   USING (auth.uid() = client_id);
 
 -- 10. Index para busquedas frecuentes
-CREATE INDEX idx_vehicles_client_id ON vehicles(client_id);
+-- Compuestos por (columna de filtro, created_at) para cubrir filtro + orden
+CREATE INDEX idx_vehicles_client_created_at ON vehicles(client_id, created_at DESC);
 CREATE INDEX idx_profiles_role ON profiles(role);
 
 -- 11. Policies para mecanicos (solo lectura)
@@ -153,8 +154,8 @@ CREATE TABLE orders (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_orders_client_id ON orders(client_id);
-CREATE INDEX idx_orders_mechanic_id ON orders(mechanic_id);
+CREATE INDEX idx_orders_client_created_at ON orders(client_id, created_at DESC);
+CREATE INDEX idx_orders_mechanic_created_at ON orders(mechanic_id, created_at DESC);
 
 -- 13. RLS y policies para orders
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;

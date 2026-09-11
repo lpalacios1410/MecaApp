@@ -1,48 +1,16 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/helpers";
+import { requireRole } from "@/lib/auth/require-role";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-export interface Vehicle {
-  id: string;
-  client_id: string;
-  plate: string;
-  brand: string;
-  model: string;
-  year: number;
-  color: string | null;
-  notes: string | null;
-  vehicle_type: "car" | "motorcycle" | null;
-  created_at: string;
-}
-
-export async function getVehicles(): Promise<Vehicle[]> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return [];
-  }
-
-  const { data, error } = await supabase
-    .from("vehicles")
-    .select("*")
-    .eq("client_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    return [];
-  }
-
-  return (data as Vehicle[]) || [];
-}
-
 export async function deleteVehicle(id: string) {
-  const supabase = await createClient();
+  await requireRole("user");
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  const user = await getCurrentUser();
 
   if (!user) {
     return { error: "No autenticado." };
@@ -62,9 +30,10 @@ export async function deleteVehicle(id: string) {
 }
 
 export async function createVehicle(formData: FormData) {
-  const supabase = await createClient();
+  await requireRole("user");
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  const user = await getCurrentUser();
 
   if (!user) {
     return { error: "No autenticado." };
@@ -121,9 +90,10 @@ export async function createVehicle(formData: FormData) {
 }
 
 export async function updateVehicleType(id: string, vehicleType: string) {
-  const supabase = await createClient();
+  await requireRole("user");
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const supabase = await createClient();
+  const user = await getCurrentUser();
 
   if (!user) {
     return { error: "No autenticado." };
