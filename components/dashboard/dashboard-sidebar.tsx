@@ -19,12 +19,11 @@ interface DashboardSidebarProps {
 
 const navItemsByRole = {
   user: [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard/client", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/client/vehicles", label: "Mis Vehículos", icon: Car },
     { href: "/dashboard/client/plans", label: "Planes", icon: Sparkles },
   ],
   mechanic: [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/mechanic", label: "Dashboard Mechanic", icon: Toolbox },
     { href: "/dashboard/mechanic/plans", label: "Planes", icon: Wrench },
     { href: "/dashboard/mechanic/orders", label: "Órdenes", icon: Car },
