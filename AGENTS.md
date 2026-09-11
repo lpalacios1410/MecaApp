@@ -18,7 +18,7 @@
 - Auth/roles: route groups `app/(auth)` and `app/dashboard/{client,mechanic}`. Gate with `requireRole(...)` in the `client`/`mechanic` layouts; server actions re-check it.
 - Dashboard pages `await connection()` to force dynamic rendering. Keep this when adding data pages, or Next may statically optimize them.
 - DB schema is `supabase-schema.sql` at repo root (not a migrations folder) and is applied manually in the Supabase SQL editor; RLS policies and indexes live there.
-- `orders` snapshot plan data from static `lib/plans-data.ts`; editing a plan in code does not change existing orders.
+- Plans live in the Supabase `plans` table (global catalog). `getActivePlans()`/`getAllPlans()` in `lib/supabase/helpers.ts` are the data source; `lib/plans-data.ts` only holds types. Mechanics manage the catalog via `app/dashboard/mechanic/plans`; `orders` snapshot `plan_id`/`plan_name`/`plan_price_usd`, so editing or deleting a plan does not change existing orders. `get_plan_order_counts()` (SECURITY DEFINER, in `supabase-schema.sql`) counts orders globally for mechanics and is used to block deleting plans with orders.
 
 ## Conventions / gotchas
 - `@/*` maps to the repo root (see `tsconfig.json`).

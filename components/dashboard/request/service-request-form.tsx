@@ -14,7 +14,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Check, Eraser, Send } from "lucide-react"
-import { SERVICE_PLANS } from "@/lib/plans-data"
+import type { ServicePlan } from "@/lib/plans-data"
 import { cn } from "@/lib/utils"
 
 type FormVehicle = {
@@ -34,6 +34,7 @@ type FormMechanic = {
 interface ServiceRequestFormProps {
   vehicles: FormVehicle[]
   mechanics: FormMechanic[]
+  plans: ServicePlan[]
 }
 
 const selectClassName =
@@ -42,6 +43,7 @@ const selectClassName =
 export function ServiceRequestForm({
   vehicles,
   mechanics,
+  plans,
 }: ServiceRequestFormProps) {
   const classifiedVehicles = useMemo(
     () => vehicles.filter((v) => v.vehicle_type),
@@ -73,10 +75,10 @@ export function ServiceRequestForm({
 
   const availablePlans = useMemo(
     () =>
-      SERVICE_PLANS.filter(
+      plans.filter(
         (p) => p.vehicleType === selectedVehicleType
       ),
-    [selectedVehicleType]
+    [plans, selectedVehicleType]
   )
 
   function handleClear() {

@@ -6,6 +6,7 @@ import {
   type UserProfile,
 } from "@/lib/supabase/helpers";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 function HeaderSkeleton() {
   return (
@@ -57,6 +58,8 @@ export default async function DashboardLayout({
 
         <main className="flex-1 p-4 md:p-8">{children}</main>
       </div>
+
+      <Toaster />
     </div>
   );
 }

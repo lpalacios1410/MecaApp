@@ -1,5 +1,10 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import {
+  planVehicleTypeLabel,
+  type PlanVehicleType,
+  type ServicePlan,
+} from "@/lib/plans-data";
 
 export interface UserProfile {
   id: string;
@@ -186,6 +191,105 @@ export async function getMechanics(): Promise<Mechanic[]> {
   const mechanics = (data as Mechanic[]) || [];
   mechanicsCache = { data: mechanics, expiresAt: Date.now() + MECHANICS_TTL_MS };
   return mechanics;
+}
+
+interface PlanRow {
+  id: string;
+  name: string;
+  vehicle_type: PlanVehicleType;
+  tagline: string;
+  price_usd: number;
+  period: string;
+  services: string[] | null;
+  highlighted: boolean;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+const PLAN_SELECT =
+  "id, name, vehicle_type, tagline, price_usd, period, services, highlighted, is_active, sort_order, created_at";
+
+function mapPlanRow(row: PlanRow): ServicePlan {
+  return {
+    id: row.id,
+    name: row.name,
+    vehicleType: row.vehicle_type,
+    vehicleTypeLabel: planVehicleTypeLabel(row.vehicle_type),
+    tagline: row.tagline,
+    priceUsd: Number(row.price_usd),
+    period: row.period,
+    services: row.services ?? [],
+    highlighted: row.highlighted,
+    isActive: row.is_active,
+    sortOrder: row.sort_order,
+  };
+}
+
+export const getActivePlans = cache(async (): Promise<ServicePlan[]> => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("plans")
+    .select(PLAN_SELECT)
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("price_usd", { ascending: true });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return (data as PlanRow[]).map(mapPlanRow);
+});
+
+export const getAllPlans = cache(async (): Promise<ServicePlan[]> => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("plans")
+    .select(PLAN_SELECT)
+    .order("sort_order", { ascending: true })
+    .order("price_usd", { ascending: true });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return (data as PlanRow[]).map(mapPlanRow);
+});
+
+export async function getPlanById(id: string): Promise<ServicePlan | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("plans")
+    .select(PLAN_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return mapPlanRow(data as PlanRow);
+}
+
+export async function getPlanOrderCounts(): Promise<Record<string, number>> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("get_plan_order_counts");
+
+  if (error || !data) {
+    return {};
+  }
+
+  const counts: Record<string, number> = {};
+  for (const row of data as { plan_id: string; order_count: number }[]) {
+    counts[row.plan_id] = Number(row.order_count);
+  }
+
+  return counts;
 }
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;

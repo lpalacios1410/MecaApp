@@ -139,7 +139,8 @@ CREATE POLICY "Mechanics can view all vehicles"
 
 -- 12. Tabla orders (solicitudes de servicio)
 -- Relacion: un cliente crea N ordenes; cada orden es para un vehiculo y un mecanico.
--- plan_id/plan_name/plan_price_usd son un snapshot del plan estatico definido en codigo (lib/plans-data.ts).
+-- plan_id/plan_name/plan_price_usd son un snapshot del plan definido en la tabla plans;
+-- editar o borrar un plan no altera las ordenes existentes.
 CREATE TABLE orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   client_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -176,3 +177,180 @@ CREATE POLICY "Mechanics can view own orders"
 CREATE POLICY "Users can view mechanics"
   ON profiles FOR SELECT
   USING (role = 'mechanic');
+
+-- 15. Tabla plans (catalogo global de planes de servicio)
+-- Los mecanicos gestionan el catalogo; los clientes solo lo leen.
+-- is_active permite desactivar un plan sin borrarlo (conserva el historial de ordenes).
+-- sort_order controla el orden de aparicion y highlighted resalta el plan en la vista cliente.
+CREATE TABLE plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  vehicle_type TEXT NOT NULL CHECK (vehicle_type IN ('car', 'motorcycle')),
+  tagline TEXT NOT NULL DEFAULT '',
+  price_usd NUMERIC NOT NULL DEFAULT 0,
+  period TEXT NOT NULL DEFAULT 'mes',
+  services TEXT[] NOT NULL DEFAULT '{}',
+  highlighted BOOLEAN NOT NULL DEFAULT FALSE,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TRIGGER update_plans_updated_at
+  BEFORE UPDATE ON plans
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE INDEX idx_plans_vehicle_sort ON plans(vehicle_type, sort_order);
+CREATE INDEX idx_plans_active ON plans(is_active);
+
+ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+
+-- Cualquier usuario autenticado (cliente o mecanico) puede ver los planes
+CREATE POLICY "Authenticated users can view plans"
+  ON plans FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+-- Solo los mecanicos pueden crear planes
+CREATE POLICY "Mechanics can insert plans"
+  ON plans FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'mechanic'
+    )
+  );
+
+-- Solo los mecanicos pueden actualizar planes
+CREATE POLICY "Mechanics can update plans"
+  ON plans FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'mechanic'
+    )
+  );
+
+-- Solo los mecanicos pueden eliminar planes
+CREATE POLICY "Mechanics can delete plans"
+  ON plans FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'mechanic'
+    )
+  );
+
+-- 16. Seed inicial del catalogo (equivalente al anterior lib/plans-data.ts)
+INSERT INTO plans (name, vehicle_type, tagline, price_usd, services, highlighted, sort_order) VALUES
+  (
+    'Esencial Carro',
+    'car',
+    'Lo básico para mantener tu carro al día',
+    19,
+    ARRAY[
+      'Cambio de aceite y filtro de aceite',
+      'Revisión de niveles (frenos, refrigerante, dirección)',
+      'Inspección general de 15 puntos'
+    ],
+    FALSE,
+    1
+  ),
+  (
+    'Integral Carro',
+    'car',
+    'Mantenimiento completo para uso diario',
+    39,
+    ARRAY[
+      'Todo lo del plan Esencial',
+      'Filtro de aire y filtro de combustible',
+      'Revisión de frenos (pastillas y discos)',
+      'Alineación y balanceo',
+      'Diagnóstico computarizado'
+    ],
+    FALSE,
+    2
+  ),
+  (
+    'Premium Carro',
+    'car',
+    'Cuidado total con atención prioritaria',
+    79,
+    ARRAY[
+      'Todo lo del plan Integral',
+      'Revisión de suspensión y amortiguadores',
+      'Sistema eléctrico y batería',
+      'Aire acondicionado',
+      'Atención prioritaria y soporte 24/7'
+    ],
+    TRUE,
+    3
+  ),
+  (
+    'Moto 150',
+    'motorcycle',
+    'Para motos 150cc de uso urbano',
+    12,
+    ARRAY[
+      'Cambio de aceite',
+      'Ajuste y lubricación de cadena',
+      'Revisión de frenos y desgaste de llantas',
+      'Revisión de luces y cables'
+    ],
+    FALSE,
+    4
+  ),
+  (
+    'Moto 200–250',
+    'motorcycle',
+    'Para motos 200–250cc, listas para la ruta',
+    24,
+    ARRAY[
+      'Todo lo del plan Moto 150',
+      'Filtro de aire',
+      'Ajuste de válvulas',
+      'Revisión de carburación o inyección',
+      'Engrase general'
+    ],
+    FALSE,
+    5
+  ),
+  (
+    'Moto 600',
+    'motorcycle',
+    'Para motos 600cc de alta cilindrada',
+    49,
+    ARRAY[
+      'Todo lo del plan Moto 200–250',
+      'Mantenimiento de inyección electrónica',
+      'Líquido de frenos',
+      'Revisión de suspensión y horquilla',
+      'Diagnóstico completo'
+    ],
+    TRUE,
+    6
+  );
+
+-- 17. Conteo global de ordenes por plan
+-- RLS solo permite a cada mecanico ver sus propias ordenes, por lo que se usa
+-- una funcion SECURITY DEFINER (con guardia de rol) para contar todas.
+CREATE OR REPLACE FUNCTION get_plan_order_counts()
+RETURNS TABLE (plan_id TEXT, order_count BIGINT)
+LANGUAGE plpgsql SECURITY DEFINER STABLE
+SET search_path = ''
+AS $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'mechanic'
+  ) THEN
+    RAISE EXCEPTION 'Solo los mecánicos pueden consultar el conteo de órdenes';
+  END IF;
+
+  RETURN QUERY
+    SELECT o.plan_id, COUNT(*)::bigint
+    FROM public.orders o
+    GROUP BY o.plan_id;
+END;
+$$;

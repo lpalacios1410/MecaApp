@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Plus } from "lucide-react";
-import { getUserVehicles, getMechanics } from "@/lib/supabase/helpers";
+import {
+  getUserVehicles,
+  getMechanics,
+  getActivePlans,
+} from "@/lib/supabase/helpers";
 import { ServiceRequestForm } from "@/components/dashboard/request/service-request-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default async function ClientRequestPage() {
   await connection();
-  const [vehicles, mechanics] = await Promise.all([
+  const [vehicles, mechanics, plans] = await Promise.all([
     getUserVehicles(),
     getMechanics(),
+    getActivePlans(),
   ]);
 
   const classifiedCount = vehicles.filter((v) => v.vehicle_type).length;
@@ -58,8 +63,20 @@ export default async function ClientRequestPage() {
             </p>
           </CardContent>
         </Card>
+      ) : plans.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-muted-foreground">
+              Todavía no hay planes de mantenimiento disponibles.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <ServiceRequestForm vehicles={vehicles} mechanics={mechanics} />
+        <ServiceRequestForm
+          vehicles={vehicles}
+          mechanics={mechanics}
+          plans={plans}
+        />
       )}
     </div>
   );
