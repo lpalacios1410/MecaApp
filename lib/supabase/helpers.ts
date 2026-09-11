@@ -25,6 +25,52 @@ export interface ClientWithVehicles {
   vehicles: Vehicle[];
 }
 
+export interface Mechanic {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
+export type OrderStatus =
+  | "pending"
+  | "accepted"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
+
+export interface OrderRow {
+  id: string;
+  client_id: string;
+  vehicle_id: string;
+  mechanic_id: string;
+  plan_id: string;
+  plan_name: string;
+  plan_price_usd: number;
+  vehicle_type: "car" | "motorcycle";
+  client_notes: string | null;
+  status: OrderStatus;
+  created_at: string;
+}
+
+interface OrderVehicleBrief {
+  id: string;
+  brand: string;
+  model: string;
+  plate: string;
+}
+
+interface OrderProfileBrief {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
+export interface OrderWithDetails extends OrderRow {
+  vehicle: OrderVehicleBrief | null;
+  client: OrderProfileBrief | null;
+  mechanic: OrderProfileBrief | null;
+}
+
 async function getUserId() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
@@ -138,4 +184,90 @@ export async function getClientsWithVehicles(): Promise<{
   );
 
   return {users, total:users.length };
+}
+
+export async function getMechanics(): Promise<Mechanic[]> {
+  const { supabase } = await getUserId();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("role", "mechanic")
+    .order("full_name", { ascending: true });
+
+  if (error) {
+    return [];
+  }
+
+  return (data as Mechanic[]) || [];
+}
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+async function attachOrderDetails(
+  supabase: SupabaseServerClient,
+  orders: OrderRow[]
+): Promise<OrderWithDetails[]> {
+  if (orders.length === 0) {
+    return [];
+  }
+
+  const vehicleIds = [...new Set(orders.map((o) => o.vehicle_id))];
+  const profileIds = [
+    ...new Set(orders.flatMap((o) => [o.client_id, o.mechanic_id])),
+  ];
+
+  const [vehiclesRes, profilesRes] = await Promise.all([
+    supabase.from("vehicles").select("id, brand, model, plate").in("id", vehicleIds),
+    supabase.from("profiles").select("id, full_name, email").in("id", profileIds),
+  ]);
+
+  const vehiclesById = new Map<string, OrderVehicleBrief>();
+  for (const vehicle of (vehiclesRes.data as OrderVehicleBrief[] | null) || []) {
+    vehiclesById.set(vehicle.id, vehicle);
+  }
+
+  const profilesById = new Map<string, OrderProfileBrief>();
+  for (const profile of (profilesRes.data as OrderProfileBrief[] | null) || []) {
+    profilesById.set(profile.id, profile);
+  }
+
+  return orders.map((order) => ({
+    ...order,
+    vehicle: vehiclesById.get(order.vehicle_id) ?? null,
+    client: profilesById.get(order.client_id) ?? null,
+    mechanic: profilesById.get(order.mechanic_id) ?? null,
+  }));
+}
+
+export async function getClientOrders(): Promise<OrderWithDetails[]> {
+  const { supabase, userId } = await getUserId();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("client_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return attachOrderDetails(supabase, data as OrderRow[]);
+}
+
+export async function getMechanicOrders(): Promise<OrderWithDetails[]> {
+  const { supabase, userId } = await getUserId();
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("mechanic_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return attachOrderDetails(supabase, data as OrderRow[]);
 }

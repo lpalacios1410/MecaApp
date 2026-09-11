@@ -135,3 +135,43 @@ CREATE POLICY "Mechanics can view all vehicles"
       WHERE id = auth.uid() AND role = 'mechanic'
     )
   );
+
+-- 12. Tabla orders (solicitudes de servicio)
+-- Relacion: un cliente crea N ordenes; cada orden es para un vehiculo y un mecanico.
+-- plan_id/plan_name/plan_price_usd son un snapshot del plan estatico definido en codigo (lib/plans-data.ts).
+CREATE TABLE orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  vehicle_id UUID NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+  mechanic_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  plan_id TEXT NOT NULL,
+  plan_name TEXT NOT NULL,
+  plan_price_usd NUMERIC NOT NULL DEFAULT 0,
+  vehicle_type TEXT NOT NULL CHECK (vehicle_type IN ('car', 'motorcycle')),
+  client_notes TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'in_progress', 'completed', 'cancelled')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_orders_client_id ON orders(client_id);
+CREATE INDEX idx_orders_mechanic_id ON orders(mechanic_id);
+
+-- 13. RLS y policies para orders
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Clients can view own orders"
+  ON orders FOR SELECT
+  USING (auth.uid() = client_id);
+
+CREATE POLICY "Clients can insert own orders"
+  ON orders FOR INSERT
+  WITH CHECK (auth.uid() = client_id);
+
+CREATE POLICY "Mechanics can view own orders"
+  ON orders FOR SELECT
+  USING (auth.uid() = mechanic_id);
+
+-- 14. Policy para que los clientes puedan listar los mecanicos (selector de "Solicitar Servicio")
+CREATE POLICY "Users can view mechanics"
+  ON profiles FOR SELECT
+  USING (role = 'mechanic');

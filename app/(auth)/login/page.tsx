@@ -5,7 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export default function RegisterPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const { error } = await searchParams
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -14,6 +20,12 @@ export default function RegisterPage() {
         </CardHeader>
 
         <CardContent>
+          {error && (
+            <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
           <form action={login} className="space-y-4">
             
 
