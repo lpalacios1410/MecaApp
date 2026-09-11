@@ -1,22 +1,23 @@
 import Link from "next/link";
+import { Wrench,  } from "lucide-react";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-black text-zinc-50">
       <nav className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
-        <h1 className="text-xl font-bold tracking-tight">
-          MecaApp
-        </h1>
+          <h1 className="text-xl font-bold tracking-tight">
+          <Wrench size="30"></Wrench> MecaApp
+          </h1>
         <div className="flex items-center gap-4">
           <Link
             href="/login"
-            className="px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:text-white"
+            className="px-4 py-2 text-sm font-medium text-zinc-300 transition-colors hover:text-white bg-gray-700 rounded-full hover:bg-gray-600"
           >
             Iniciar Sesión
           </Link>
           <Link
             href="/register"
-            className="px-4 py-2 text-sm font-medium bg-white text-black rounded-full transition-colors hover:bg-zinc-200"
+            className="px-4 py-2 text-sm font-medium bg-white text-black rounded-full transition-colors hover:bg-orange-500 hover:text-white"
           >
             Registrarse
           </Link>

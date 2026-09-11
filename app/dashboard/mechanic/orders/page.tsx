@@ -6,15 +6,15 @@ export default async function MechanicOrdersPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Service Orders</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Órdenes de Servicio</h2>
         <p className="text-muted-foreground">
-          View and manage incoming service orders
+          Visualiza y gestiona las órdenes de servicio recibidas
         </p>
       </div>
 
       <div className="text-center py-12">
         <p className="text-muted-foreground">
-          Orders view coming soon.
+          Vista de órdenes próximamente.
         </p>
       </div>
     </div>

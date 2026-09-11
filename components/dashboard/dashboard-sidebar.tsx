@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Car, LayoutDashboard, Wrench, LogOut, Menu } from "lucide-react";
+import { Car, LayoutDashboard, Wrench, LogOut, Menu, Toolbox, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -20,10 +20,12 @@ interface DashboardSidebarProps {
 const navItemsByRole = {
   user: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/dashboard/vehicles", label: "Mis Vehículos", icon: Car },
+    { href: "/dashboard/client/vehicles", label: "Mis Vehículos", icon: Car },
+    { href: "/dashboard/client/plans", label: "Planes", icon: Sparkles },
   ],
   mechanic: [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard/mechanic", label: "Dashboard Mechanic", icon: Toolbox },
     { href: "/dashboard/mechanic/plans", label: "Planes", icon: Wrench },
     { href: "/dashboard/mechanic/orders", label: "Órdenes", icon: Car },
   ],
@@ -43,9 +45,7 @@ function SidebarContent({ role }: DashboardSidebarProps) {
       <nav className="flex-1 space-y-1 p-4">
         {items.map((item) => {
           const isActive =
-            item.href === "/dashboard"
-              ? pathname === "/dashboard"
-              : pathname.startsWith(item.href);
+             pathname === item.href;
 
           return (
             <Link

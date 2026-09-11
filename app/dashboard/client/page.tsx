@@ -18,15 +18,15 @@ export default async function ClientDashboardPage() {
   const vehicles = await getUserVehicles();
 
   if (vehicles.length === 0) {
-    redirect("/dashboard/client/vehicles");
+    redirect("/dashboard/client/vehicles/new");
   }
 
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Client Dashboard</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground">
-          Welcome, {profile.full_name || profile.email}
+          Bienvenido, {profile.full_name || profile.email}
         </p>
       </div>
 
@@ -34,14 +34,14 @@ export default async function ClientDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              My Vehicles
+              Mis Vehículos
             </CardTitle>
             <Car className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{vehicles.length}</div>
             <p className="text-xs text-muted-foreground">
-              Registered vehicle{vehicles.length !== 1 ? "s" : ""}
+              Vehículo{vehicles.length !== 1 ? "s" : ""} registrado
             </p>
           </CardContent>
         </Card>
@@ -49,19 +49,19 @@ export default async function ClientDashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              User Type
+              Tipo de Usuario
             </CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold capitalize">Client</div>
+            <div className="text-2xl font-bold capitalize">Usuario</div>
             <p className="text-xs text-muted-foreground">{profile.email}</p>
           </CardContent>
         </Card>
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-4">Your Vehicles</h3>
+        <h3 className="text-lg font-semibold mb-4">Tus Vehículos</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {vehicles.map((vehicle) => (
             <Card key={vehicle.id}>
@@ -73,11 +73,9 @@ export default async function ClientDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-muted-foreground space-y-1">
-                  <p>
-                    Type: {vehicle.vehicle_type === "car" ? "Car" : "Motorcycle"}
-                  </p>
-                  <p>Year: {vehicle.year}</p>
+                  <p>Año: {vehicle.year}</p>
                   {vehicle.color && <p>Color: {vehicle.color}</p>}
+                  {vehicle.notes && <p>Notas: {vehicle.notes}</p>}
                 </div>
               </CardContent>
             </Card>
@@ -88,7 +86,7 @@ export default async function ClientDashboardPage() {
               <CardContent className="flex flex-col items-center justify-center h-full min-h-[140px]">
                 <Plus className="h-8 w-8 text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground">
-                  Add Vehicle
+                  Agregar Vehículo
                 </p>
               </CardContent>
             </Card>
@@ -96,9 +94,14 @@ export default async function ClientDashboardPage() {
         </div>
       </div>
 
-      <div>
+      <div className="flex flex-wrap gap-4">
         <Link href="/dashboard/client/request">
-          <Button size="lg">Request Service</Button>
+          <Button size="lg">Solicitar Servicio</Button>
+        </Link>
+        <Link href="/dashboard/client/plans">
+          <Button size="lg" variant="outline">
+            Ver Planes
+          </Button>
         </Link>
       </div>
     </div>

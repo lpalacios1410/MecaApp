@@ -11,7 +11,7 @@ import {
 
 export default function ConfirmEmailPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
@@ -28,7 +28,7 @@ export default function ConfirmEmailPage() {
             ¿No lo recibiste? Revisa tu carpeta de spam o correo no deseado.
           </p>
           <Link href="/">
-            <Button variant="outline" className="w-full bg-orange-500 hover:bg-orange-400 text-white hover:text-white">
+            <Button variant="outline" className="w-full">
               Volver al Inicio de Sesión
             </Button>
           </Link>

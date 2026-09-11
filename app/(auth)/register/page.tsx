@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 
 export default function RegisterPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Crea tu cuenta en MecaAPP</CardTitle>
@@ -52,10 +52,10 @@ export default function RegisterPage() {
               <select
                 id="role"
                 name="role"
-                defaultValue="client"
+                defaultValue="user"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
-                <option value="client">Cliente</option>
+                <option value="user">Cliente</option>
                 <option value="mechanic">Mecánico</option>
               </select>
             </div>
