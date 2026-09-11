@@ -31,7 +31,7 @@ async function DashboardHeader({ profile }: { profile: UserProfile }) {
           </h1>
           <p className="text-sm text-muted-foreground">
             {profile.role === "mechanic" ? "Mecánico" : "Usuario"} •{" "}
-            {vehicleCount} vehículo{vehicleCount !== 1 ? "s" : ""}
+            {profile.role === "mechanic"? "" : ""}
           </p>
         </div>
       </div>
