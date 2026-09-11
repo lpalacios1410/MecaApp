@@ -69,13 +69,14 @@ export function ServiceRequestForm({
   )
 
   const selectedVehicle = vehicles.find((v) => v.id === vehicleId)
+  const selectedVehicleType = selectedVehicle?.vehicle_type ?? null
 
   const availablePlans = useMemo(
     () =>
       SERVICE_PLANS.filter(
-        (p) => p.vehicleType === selectedVehicle?.vehicle_type
+        (p) => p.vehicleType === selectedVehicleType
       ),
-    [selectedVehicle]
+    [selectedVehicleType]
   )
 
   function handleClear() {

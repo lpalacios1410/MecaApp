@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getVehicles, deleteVehicle } from "./actions";
+import { deleteVehicle } from "./actions";
+import { getUserVehicles } from "@/lib/supabase/helpers";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,7 +23,7 @@ async function handleDeleteVehicle(formData: FormData) {
 
 export default async function ClientVehiclesPage() {
   await connection();
-  const vehicles = await getVehicles();
+  const vehicles = await getUserVehicles();
 
   return (
     <div className="space-y-8">

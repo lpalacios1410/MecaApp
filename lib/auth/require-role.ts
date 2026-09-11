@@ -1,26 +1,13 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { getUserProfile } from "@/lib/supabase/helpers"
 
 type Role = "user" | "mechanic"
 
 export async function requireRole(requiredRole: Role) {
-  const supabase = await createClient()
-
-  const { data } = await supabase.auth.getUser()
-  const userId = data?.user?.id
-
-  if (!userId) {
-    redirect("/login")
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, role")
-    .eq("id", userId)
-    .single()
+  const profile = await getUserProfile().catch(() => null)
 
   if (!profile) {
-    redirect("/login?error=Perfil no encontrado")
+    redirect("/login")
   }
 
   if (profile.role !== requiredRole) {

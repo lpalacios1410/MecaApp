@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 export interface UserProfile {
@@ -18,11 +19,6 @@ export interface Vehicle {
   notes: string | null;
   vehicle_type: "car" | "motorcycle" | null;
   created_at: string;
-}
-
-export interface ClientWithVehicles {
-  client: UserProfile;
-  vehicles: Vehicle[];
 }
 
 export interface Mechanic {
@@ -73,8 +69,8 @@ export interface OrderWithDetails extends OrderRow {
 
 async function getUserId() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const userId = data?.user?.id;
+  const user = await getCurrentUser();
+  const userId = user?.id;
 
   if (!userId) {
     throw new Error("No autenticado");
@@ -83,7 +79,13 @@ async function getUserId() {
   return { supabase, userId };
 }
 
-export async function getUserProfile(): Promise<UserProfile> {
+export const getCurrentUser = cache(async () => {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getUser();
+  return data?.user ?? null;
+});
+
+export const getUserProfile = cache(async (): Promise<UserProfile> => {
   const { supabase, userId } = await getUserId();
 
   const { data, error } = await supabase
@@ -93,13 +95,13 @@ export async function getUserProfile(): Promise<UserProfile> {
     .single();
 
   if (error || !data) {
-    const { data: authUser } = await supabase.auth.getUser();
-    if (authUser?.user) {
+    const authUser = await getCurrentUser();
+    if (authUser) {
       await supabase.from("profiles").insert({
-        id: authUser.user.id,
-        email: authUser.user.email!,
-        full_name: authUser.user.user_metadata?.full_name || "",
-        role: authUser.user.user_metadata?.role || "user",
+        id: authUser.id,
+        email: authUser.email!,
+        full_name: authUser.user_metadata?.full_name || "",
+        role: authUser.user_metadata?.role || "user",
       });
 
       const { data: newData } = await supabase
@@ -113,7 +115,7 @@ export async function getUserProfile(): Promise<UserProfile> {
   }
 
   return data as UserProfile;
-}
+});
 
 export async function getUserVehicles(): Promise<Vehicle[]> {
   const { supabase, userId } = await getUserId();
@@ -146,47 +148,29 @@ export async function getUserVehiclesCount(): Promise<number> {
   return count;
 }
 
-export async function getClientsWithVehicles(): Promise<{
-  users: ClientWithVehicles[];
-  total: number;
-}> {
+export async function getClientsCount(): Promise<number> {
   const { supabase } = await getUserId();
 
-  const { data: profiles, error: profilesError } = await supabase
+  const { count, error } = await supabase
     .from("profiles")
-    .select("id, email, full_name, role")
+    .select("id", { count: "exact", head: true })
     .eq("role", "user");
 
-  if (profilesError || !profiles) {
-    return {users: [], total: 0 };
+  if (error || count === null) {
+    return 0;
   }
 
-  const { data: vehicles, error: vehiclesError } = await supabase
-    .from("vehicles")
-    .select("*");
-
-  if (vehiclesError || !vehicles) {
-    return {users: [], total: 0 };
-  }
-
-  const vehiclesByUser = new Map<string, Vehicle[]>();
-  for (const v of vehicles as Vehicle[]) {
-    const list = vehiclesByUser.get(v.client_id) || [];
-    list.push(v);
-    vehiclesByUser.set(v.client_id, list);
-  }
-
-  const users: ClientWithVehicles[] = (profiles as UserProfile[]).map(
-    (profile) => ({
-      client: profile,
-      vehicles: vehiclesByUser.get(profile.id) || [],
-    })
-  );
-
-  return {users, total:users.length };
+  return count;
 }
 
+const MECHANICS_TTL_MS = 60_000;
+let mechanicsCache: { data: Mechanic[]; expiresAt: number } | null = null;
+
 export async function getMechanics(): Promise<Mechanic[]> {
+  if (mechanicsCache && mechanicsCache.expiresAt > Date.now()) {
+    return mechanicsCache.data;
+  }
+
   const { supabase } = await getUserId();
 
   const { data, error } = await supabase
@@ -199,7 +183,9 @@ export async function getMechanics(): Promise<Mechanic[]> {
     return [];
   }
 
-  return (data as Mechanic[]) || [];
+  const mechanics = (data as Mechanic[]) || [];
+  mechanicsCache = { data: mechanics, expiresAt: Date.now() + MECHANICS_TTL_MS };
+  return mechanics;
 }
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;

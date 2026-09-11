@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getUserProfile, getClientsWithVehicles, getMechanicOrders } from "@/lib/supabase/helpers";
+import { getUserProfile, getClientsCount, getMechanicOrders } from "@/lib/supabase/helpers";
 import { Users, Wrench, FileText, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,9 +12,9 @@ import { connection } from "next/server";
 
 export default async function MechanicDashboardPage() {
   await connection();
-  const profile = await getUserProfile();
-  const [{ total }, orders] = await Promise.all([
-    getClientsWithVehicles(),
+  const [profile, total, orders] = await Promise.all([
+    getUserProfile(),
+    getClientsCount(),
     getMechanicOrders(),
   ]);
   const pendingOrders = orders.filter((o) => o.status === "pending").length;

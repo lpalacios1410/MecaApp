@@ -14,8 +14,10 @@ import { connection } from "next/server";
 
 export default async function ClientDashboardPage() {
   await connection();
-  const profile = await getUserProfile();
-  const vehicles = await getUserVehicles();
+  const [profile, vehicles] = await Promise.all([
+    getUserProfile(),
+    getUserVehicles(),
+  ]);
 
   if (vehicles.length === 0) {
     redirect("/dashboard/client/vehicles/new");
