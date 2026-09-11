@@ -3,33 +3,77 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { requireRole } from "@/lib/auth/require-role"
+import { SERVICE_PLANS } from "@/lib/plans-data"
 
 export async function createOrder(formData: FormData) {
   await requireRole("user")
 
   const vehicleId = String(formData.get("vehicleId") ?? "")
+  const mechanicId = String(formData.get("mechanicId") ?? "")
   const planId = String(formData.get("planId") ?? "")
-  const preferredDate = String(formData.get("preferredDate") ?? "")
-  const clientNotes = String(formData.get("clientNotes") ?? "")
+  const clientNotes = String(formData.get("clientNotes") ?? "").trim()
 
-  if (!vehicleId || !planId) {
-    redirect("/dashboard/client/request?error=Selecciona un vehículo y un plan")
+  if (!vehicleId || !mechanicId || !planId) {
+    return { error: "Selecciona un mecánico, un vehículo y un plan." }
+  }
+
+  const plan = SERVICE_PLANS.find((p) => p.id === planId)
+  if (!plan) {
+    return { error: "El plan seleccionado no es válido." }
   }
 
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const { error } = await supabase.rpc("create_order", {
-    p_vehicle_id: vehicleId,
-    p_plan_id: planId,
-    p_preferred_date: preferredDate || null,
-    p_client_notes: clientNotes || null,
+  if (!user) {
+    return { error: "No autenticado." }
+  }
+
+  const { data: vehicle } = await supabase
+    .from("vehicles")
+    .select("id, client_id, vehicle_type")
+    .eq("id", vehicleId)
+    .single()
+
+  if (!vehicle || vehicle.client_id !== user.id) {
+    return { error: "El vehículo seleccionado no es válido." }
+  }
+
+  if (!vehicle.vehicle_type) {
+    return { error: "Clasifica tu vehículo antes de solicitar el servicio." }
+  }
+
+  if (vehicle.vehicle_type !== plan.vehicleType) {
+    return { error: "El plan seleccionado no corresponde al tipo de tu vehículo." }
+  }
+
+  const { data: mechanic } = await supabase
+    .from("profiles")
+    .select("id, role")
+    .eq("id", mechanicId)
+    .single()
+
+  if (!mechanic || mechanic.role !== "mechanic") {
+    return { error: "El mecánico seleccionado no es válido." }
+  }
+
+  const { error } = await supabase.from("orders").insert({
+    client_id: user.id,
+    vehicle_id: vehicleId,
+    mechanic_id: mechanicId,
+    plan_id: plan.id,
+    plan_name: plan.name,
+    plan_price_usd: plan.priceUsd,
+    vehicle_type: plan.vehicleType,
+    client_notes: clientNotes || null,
+    status: "pending",
   })
 
   if (error) {
-    redirect(
-      `/dashboard/client/request?error=${encodeURIComponent(error.message)}`
-    )
+    return { error: `Error al crear la orden: ${error.message}` }
   }
 
-  redirect("/dashboard/client/orders?success=Orden creada correctamente")
+  redirect("/dashboard/client/orders?success=Solicitud enviada correctamente")
 }
