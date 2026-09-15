@@ -90,8 +90,8 @@ export function MechanicPlanCard({
         </div>
 
         <ul className="flex-1 space-y-1.5 text-sm text-muted-foreground">
-          {plan.services.map((service) => (
-            <li key={service} className="flex items-start gap-2">
+          {plan.services.map((service, index) => (
+            <li key={index} className="flex items-start gap-2">
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               {service}
             </li>

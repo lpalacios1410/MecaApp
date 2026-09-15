@@ -25,7 +25,7 @@ export default async function RegisterPage({
   const errorInfo = error ? describeError(error) : null
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+    <main className="flex min-h-dvh items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Crea tu cuenta en MecaAPP</CardTitle>
@@ -72,19 +72,6 @@ export default async function RegisterPage({
                 minLength={8}
                 required
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Tipo de usuario</Label>
-              <select
-                id="role"
-                name="role"
-                defaultValue="user"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="user">Cliente</option>
-                <option value="mechanic">Mecánico</option>
-              </select>
             </div>
 
             <Button className="w-full" type="submit">

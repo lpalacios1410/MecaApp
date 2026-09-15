@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useTransition } from "react"
+import { useCallback, useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Inbox, Plus, Search } from "lucide-react"
@@ -9,7 +9,7 @@ import {
   deletePlan,
   duplicatePlan,
   togglePlanActive,
-} from "@/app/dashboard/mechanic/plans/actions"
+} from "@/app/dashboard/admin/plans/actions"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -31,7 +31,7 @@ type ActionResult =
 
 type VehicleFilter = "all" | "car" | "motorcycle"
 
-interface MechanicPlansManagerProps {
+interface PlansManagerProps {
   plans: ServicePlan[]
   orderCounts: Record<string, number>
 }
@@ -39,10 +39,7 @@ interface MechanicPlansManagerProps {
 const selectClassName =
   "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-48"
 
-export function MechanicPlansManager({
-  plans,
-  orderCounts,
-}: MechanicPlansManagerProps) {
+export function PlansManager({ plans, orderCounts }: PlansManagerProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [search, setSearch] = useState("")
@@ -65,35 +62,47 @@ export function MechanicPlansManager({
     })
   }, [plans, search, vehicleFilter])
 
-  function runAction(
-    action: () => Promise<ActionResult>,
-    onSuccess?: () => void
-  ) {
-    startTransition(async () => {
-      const result = await action()
-      if (result.status === "success") {
-        toast.success(result.message)
-        onSuccess?.()
-        router.refresh()
-      } else {
-        toast.error(result.error)
-      }
-    })
-  }
+  const runAction = useCallback(
+    (action: () => Promise<ActionResult>, onSuccess?: () => void) => {
+      startTransition(async () => {
+        const result = await action()
+        if (result.status === "success") {
+          toast.success(result.message)
+          onSuccess?.()
+          router.refresh()
+        } else {
+          toast.error(result.error)
+        }
+      })
+    },
+    [router]
+  )
 
-  function handleToggle(plan: ServicePlan) {
-    runAction(() => togglePlanActive(plan.id, !plan.isActive))
-  }
+  const handleToggle = useCallback(
+    (plan: ServicePlan) => {
+      runAction(() => togglePlanActive(plan.id, !plan.isActive))
+    },
+    [runAction]
+  )
 
-  function handleDuplicate(plan: ServicePlan) {
-    runAction(() => duplicatePlan(plan.id))
-  }
+  const handleDuplicate = useCallback(
+    (plan: ServicePlan) => {
+      runAction(() => duplicatePlan(plan.id))
+    },
+    [runAction]
+  )
 
-  function handleDelete() {
+  const handleDelete = useCallback(() => {
     if (!deletingPlan) return
     const plan = deletingPlan
-    runAction(() => deletePlan(plan.id), () => setDeletingPlan(null))
-  }
+    runAction(
+      () => deletePlan(plan.id),
+      () => setDeletingPlan(null)
+    )
+  }, [deletingPlan, runAction])
+
+  const closeCreate = useCallback(() => setCreateOpen(false), [])
+  const closeEdit = useCallback(() => setEditingPlan(null), [])
 
   return (
     <>
@@ -162,7 +171,7 @@ export function MechanicPlansManager({
               Define los datos del plan de servicio.
             </DialogDescription>
           </DialogHeader>
-          <MechanicPlanForm onSuccess={() => setCreateOpen(false)} />
+          <MechanicPlanForm onSuccess={closeCreate} />
         </DialogContent>
       </Dialog>
 
@@ -181,7 +190,7 @@ export function MechanicPlansManager({
             <MechanicPlanForm
               key={editingPlan.id}
               plan={editingPlan}
-              onSuccess={() => setEditingPlan(null)}
+              onSuccess={closeEdit}
             />
           )}
         </DialogContent>
@@ -247,11 +256,7 @@ export function MechanicPlansManager({
             <DialogDescription>Así lo verá el cliente.</DialogDescription>
           </DialogHeader>
           {previewPlan && (
-            <PlanCard
-              plan={previewPlan}
-              showVehicleBadge
-              showAction={false}
-            />
+            <PlanCard plan={previewPlan} showVehicleBadge showAction={false} />
           )}
         </DialogContent>
       </Dialog>

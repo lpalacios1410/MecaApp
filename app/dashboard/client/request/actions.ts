@@ -11,7 +11,7 @@ export async function createOrder(formData: FormData) {
   const vehicleId = String(formData.get("vehicleId") ?? "")
   const mechanicId = String(formData.get("mechanicId") ?? "")
   const planId = String(formData.get("planId") ?? "")
-  const clientNotes = String(formData.get("clientNotes") ?? "").trim()
+  const clientNotes = String(formData.get("clientNotes") ?? "").trim().slice(0, 1000)
 
   if (!vehicleId || !mechanicId || !planId) {
     return { error: "Selecciona un mecánico, un vehículo y un plan." }
@@ -70,7 +70,8 @@ export async function createOrder(formData: FormData) {
   })
 
   if (error) {
-    return { error: `Error al crear la orden: ${error.message}` }
+    console.error("[createOrder]", error)
+    return { error: "No se pudo crear la solicitud. Inténtalo de nuevo." }
   }
 
   redirect("/dashboard/client/orders?success=Solicitud enviada correctamente")

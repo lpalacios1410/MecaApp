@@ -26,8 +26,11 @@ type ParseResult =
   | { values: PlanFormValues }
   | { error: string }
 
+const MAX_SERVICES = 30
+const MAX_TEXT_LENGTH = 200
+
 function revalidatePlanPaths() {
-  revalidatePath("/dashboard/mechanic/plans")
+  revalidatePath("/dashboard/admin/plans")
   revalidatePath("/dashboard/client/plans")
   revalidatePath("/dashboard/client/request")
 }
@@ -43,16 +46,20 @@ function parsePlanForm(formData: FormData): ParseResult {
   const highlighted = formData.get("highlighted") === "on"
   const isActive = formData.get("isActive") === "on"
 
-  if (name.length < 2) {
-    return { error: "El nombre debe tener mínimo 2 caracteres." }
+  if (name.length < 2 || name.length > MAX_TEXT_LENGTH) {
+    return { error: "El nombre debe tener entre 2 y 200 caracteres." }
   }
 
   if (vehicleType !== "car" && vehicleType !== "motorcycle") {
     return { error: "Selecciona el tipo de vehículo." }
   }
 
-  if (!tagline) {
-    return { error: "La descripción corta es obligatoria." }
+  if (!tagline || tagline.length > MAX_TEXT_LENGTH) {
+    return { error: "La descripción corta es obligatoria (máx. 200 caracteres)." }
+  }
+
+  if (period.length > 40) {
+    return { error: "El periodo no puede superar 40 caracteres." }
   }
 
   if (priceRaw === "" || Number.isNaN(Number(priceRaw)) || Number(priceRaw) < 0) {
@@ -71,6 +78,14 @@ function parsePlanForm(formData: FormData): ParseResult {
 
   if (services.length === 0) {
     return { error: "Agrega al menos un servicio (uno por línea)." }
+  }
+
+  if (services.length > MAX_SERVICES) {
+    return { error: `No se permiten más de ${MAX_SERVICES} servicios.` }
+  }
+
+  if (services.some((service) => service.length > MAX_TEXT_LENGTH)) {
+    return { error: `Cada servicio debe tener máximo ${MAX_TEXT_LENGTH} caracteres.` }
   }
 
   return {
@@ -92,7 +107,7 @@ export async function createPlan(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
-  await requireRole("mechanic")
+  await requireRole("admin")
 
   const parsed = parsePlanForm(formData)
   if ("error" in parsed) {
@@ -103,7 +118,8 @@ export async function createPlan(
   const { error } = await supabase.from("plans").insert(parsed.values)
 
   if (error) {
-    return { status: "error", error: `Error al crear el plan: ${error.message}` }
+    console.error("[createPlan]", error)
+    return { status: "error", error: "No se pudo crear el plan. Inténtalo de nuevo." }
   }
 
   revalidatePlanPaths()
@@ -114,7 +130,7 @@ export async function updatePlan(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
-  await requireRole("mechanic")
+  await requireRole("admin")
 
   const id = String(formData.get("id") ?? "")
   if (!id) {
@@ -133,7 +149,8 @@ export async function updatePlan(
     .eq("id", id)
 
   if (error) {
-    return { status: "error", error: `Error al actualizar el plan: ${error.message}` }
+    console.error("[updatePlan]", error)
+    return { status: "error", error: "No se pudo actualizar el plan. Inténtalo de nuevo." }
   }
 
   revalidatePlanPaths()
@@ -141,16 +158,21 @@ export async function updatePlan(
 }
 
 export async function deletePlan(id: string): Promise<ActionResult> {
-  await requireRole("mechanic")
+  await requireRole("admin")
 
   if (!id) {
     return { status: "error", error: "Plan inválido." }
   }
 
-  const supabase = await createClient()
+  const { counts, error: countsError } = await getPlanOrderCounts()
+  if (countsError) {
+    return {
+      status: "error",
+      error: "No se pudo verificar las órdenes asociadas. Inténtalo de nuevo.",
+    }
+  }
 
-  const orderCounts = await getPlanOrderCounts()
-  if ((orderCounts[id] ?? 0) > 0) {
+  if ((counts[id] ?? 0) > 0) {
     return {
       status: "error",
       error:
@@ -158,10 +180,12 @@ export async function deletePlan(id: string): Promise<ActionResult> {
     }
   }
 
+  const supabase = await createClient()
   const { error } = await supabase.from("plans").delete().eq("id", id)
 
   if (error) {
-    return { status: "error", error: `Error al eliminar el plan: ${error.message}` }
+    console.error("[deletePlan]", error)
+    return { status: "error", error: "No se pudo eliminar el plan. Inténtalo de nuevo." }
   }
 
   revalidatePlanPaths()
@@ -172,7 +196,7 @@ export async function togglePlanActive(
   id: string,
   isActive: boolean
 ): Promise<ActionResult> {
-  await requireRole("mechanic")
+  await requireRole("admin")
 
   if (!id) {
     return { status: "error", error: "Plan inválido." }
@@ -185,7 +209,8 @@ export async function togglePlanActive(
     .eq("id", id)
 
   if (error) {
-    return { status: "error", error: `Error al actualizar el plan: ${error.message}` }
+    console.error("[togglePlanActive]", error)
+    return { status: "error", error: "No se pudo actualizar el plan. Inténtalo de nuevo." }
   }
 
   revalidatePlanPaths()
@@ -196,7 +221,7 @@ export async function togglePlanActive(
 }
 
 export async function duplicatePlan(id: string): Promise<ActionResult> {
-  await requireRole("mechanic")
+  await requireRole("admin")
 
   if (!id) {
     return { status: "error", error: "Plan inválido." }
@@ -226,7 +251,8 @@ export async function duplicatePlan(id: string): Promise<ActionResult> {
   })
 
   if (error) {
-    return { status: "error", error: `Error al duplicar el plan: ${error.message}` }
+    console.error("[duplicatePlan]", error)
+    return { status: "error", error: "No se pudo duplicar el plan. Inténtalo de nuevo." }
   }
 
   revalidatePlanPaths()

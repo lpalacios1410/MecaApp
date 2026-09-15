@@ -1,23 +1,25 @@
 import { redirect } from "next/navigation"
-import { getUserProfile } from "@/lib/supabase/helpers"
-
-type Role = "user" | "mechanic"
+import { getCurrentUser, getUserProfile } from "@/lib/supabase/helpers"
+import type { Role } from "@/lib/auth/roles"
 
 export async function requireRole(requiredRole: Role) {
-  const profile = await getUserProfile().catch(() => null)
+  const user = await getCurrentUser()
 
-  if (!profile) {
+  if (!user) {
     redirect("/login")
   }
 
-  if (profile.role !== requiredRole) {
-    const destination =
-      profile.role === "mechanic"
-        ? "/dashboard/mechanic"
-        : "/dashboard/client"
+  const profile = await getUserProfile()
 
-    redirect(destination)
+  if (profile.role !== requiredRole) {
+    redirect(dashboardPathForRole(profile.role))
   }
 
   return profile
+}
+
+export function dashboardPathForRole(role: Role): string {
+  if (role === "admin") return "/dashboard/admin"
+  if (role === "mechanic") return "/dashboard/mechanic"
+  return "/dashboard/client"
 }

@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { dashboardPathForRole } from "@/lib/auth/require-role"
+import type { Role } from "@/lib/auth/roles"
 
 export async function login(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim()
@@ -27,9 +29,12 @@ export async function login(formData: FormData) {
     .eq("id", user.id)
     .single()
 
-  if (profile?.role === "mechanic") {
-    redirect("/dashboard/mechanic")
-  }
+  const role: Role =
+    profile?.role === "mechanic"
+      ? "mechanic"
+      : profile?.role === "admin"
+        ? "admin"
+        : "user"
 
-  redirect("/dashboard/client")
+  redirect(dashboardPathForRole(role))
 }
