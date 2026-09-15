@@ -3,7 +3,7 @@ import { Wrench,  } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-black text-zinc-50">
+    <div className="flex flex-col min-h-dvh bg-black text-zinc-50">
       <nav className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
           <h1 className="text-xl font-bold tracking-tight">
           <Wrench size="30"></Wrench> MecaApp
