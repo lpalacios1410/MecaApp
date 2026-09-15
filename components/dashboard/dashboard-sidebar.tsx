@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Car, LayoutDashboard, Wrench, LogOut, Menu, Toolbox, Sparkles, ClipboardList } from "lucide-react";
+import { Car, LayoutDashboard, Wrench, LogOut, Menu, Toolbox, Sparkles, ClipboardList, Layers, ShieldCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -12,9 +12,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import * as React from "react";
+import type { Role } from "@/lib/auth/roles";
 
 interface DashboardSidebarProps {
-  role: "user" | "mechanic";
+  role: Role;
 }
 
 const navItemsByRole = {
@@ -25,15 +26,37 @@ const navItemsByRole = {
     { href: "/dashboard/client/orders", label: "Mis Órdenes", icon: ClipboardList },
   ],
   mechanic: [
-    { href: "/dashboard/mechanic", label: "Dashboard Mechanic", icon: Toolbox },
-    { href: "/dashboard/mechanic/plans", label: "Planes", icon: Wrench },
+    { href: "/dashboard/mechanic", label: "Dashboard", icon: Toolbox },
     { href: "/dashboard/mechanic/orders", label: "Órdenes", icon: Car },
   ],
-};
+  admin: [
+    { href: "/dashboard/admin", label: "Dashboard", icon: ShieldCheck },
+    { href: "/dashboard/admin/plans", label: "Planes", icon: Layers },
+    { href: "/dashboard/admin/users", label: "Usuarios", icon: Users },
+  ],
+} satisfies Record<Role, { href: string; label: string; icon: React.ElementType }[]>;
+
+function matchesHref(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function getActiveHref(pathname: string, items: { href: string }[]) {
+  let active: string | null = null;
+  for (const item of items) {
+    if (
+      matchesHref(pathname, item.href) &&
+      (active === null || item.href.length > active.length)
+    ) {
+      active = item.href;
+    }
+  }
+  return active;
+}
 
 function SidebarContent({ role }: DashboardSidebarProps) {
   const pathname = usePathname();
   const items = navItemsByRole[role];
+  const activeHref = getActiveHref(pathname, items);
 
   return (
     <div className="flex h-full flex-col">
@@ -44,8 +67,7 @@ function SidebarContent({ role }: DashboardSidebarProps) {
 
       <nav className="flex-1 space-y-1 p-4">
         {items.map((item) => {
-          const isActive =
-             pathname === item.href;
+          const isActive = item.href === activeHref;
 
           return (
             <Link
@@ -95,12 +117,12 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
       <div className="md:hidden fixed top-0 left-0 z-50 p-2">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="h-11 w-11">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Abrir menú</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0" showCloseButton={false}>
+          <SheetContent side="left" className="w-4/5 max-w-64 p-0" showCloseButton={false}>
             <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
             <SidebarContent role={role} />
           </SheetContent>
