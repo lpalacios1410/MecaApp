@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import {
   createPlan,
   updatePlan,
-} from "@/app/dashboard/mechanic/plans/actions"
+} from "@/app/dashboard/admin/plans/actions"
 import type { ServicePlan } from "@/lib/plans-data"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"

@@ -16,6 +16,24 @@ export async function deleteVehicle(id: string) {
     return { error: "No autenticado." };
   }
 
+  const { count, error: countError } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("vehicle_id", id)
+    .eq("client_id", user.id);
+
+  if (countError) {
+    console.error("[deleteVehicle:count]", countError);
+    return { error: "No se pudo verificar el vehículo. Inténtalo de nuevo." };
+  }
+
+  if ((count ?? 0) > 0) {
+    return {
+      error:
+        "Este vehículo tiene órdenes asociadas. Elimínalas o espera a que finalicen antes de borrarlo.",
+    };
+  }
+
   const { error } = await supabase
     .from("vehicles")
     .delete()
@@ -23,6 +41,13 @@ export async function deleteVehicle(id: string) {
     .eq("client_id", user.id);
 
   if (error) {
+    console.error("[deleteVehicle]", error);
+    if (error.code === "23503") {
+      return {
+        error:
+          "No se puede eliminar el vehículo porque tiene órdenes asociadas.",
+      };
+    }
     return { error: "Error al eliminar el vehículo." };
   }
 
@@ -63,8 +88,12 @@ export async function createVehicle(formData: FormData) {
     return { error: "El modelo es obligatorio." };
   }
 
-  const yearNum = parseInt(year);
-  if (isNaN(yearNum) || yearNum < 1900 || yearNum > new Date().getFullYear() + 1) {
+  const yearNum = Number(year);
+  if (
+    !Number.isInteger(yearNum) ||
+    yearNum < 1900 ||
+    yearNum > new Date().getFullYear() + 1
+  ) {
     return { error: "Año inválido." };
   }
 
@@ -80,10 +109,11 @@ export async function createVehicle(formData: FormData) {
   });
 
   if (error) {
+    console.error("[createVehicle]", error);
     if (error.code === "23505") {
-      return { error: "Ya existe un vehículo con esa placa." };
+      return { error: "Ya tienes un vehículo registrado con esa placa." };
     }
-    return { error: `Error al crear el vehículo: ${error.message}` };
+    return { error: "No se pudo crear el vehículo. Inténtalo de nuevo." };
   }
 
   redirect("/dashboard/client/vehicles");
@@ -103,6 +133,24 @@ export async function updateVehicleType(id: string, vehicleType: string) {
     return { error: "Tipo de vehículo inválido." };
   }
 
+  const { count, error: countError } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("vehicle_id", id)
+    .eq("client_id", user.id);
+
+  if (countError) {
+    console.error("[updateVehicleType:count]", countError);
+    return { error: "No se pudo verificar el vehículo. Inténtalo de nuevo." };
+  }
+
+  if ((count ?? 0) > 0) {
+    return {
+      error:
+        "No puedes cambiar el tipo de un vehículo que ya tiene órdenes asociadas.",
+    };
+  }
+
   const { error } = await supabase
     .from("vehicles")
     .update({ vehicle_type: vehicleType })
@@ -110,6 +158,7 @@ export async function updateVehicleType(id: string, vehicleType: string) {
     .eq("client_id", user.id);
 
   if (error) {
+    console.error("[updateVehicleType]", error);
     return { error: "Error al actualizar el tipo de vehículo." };
   }
 

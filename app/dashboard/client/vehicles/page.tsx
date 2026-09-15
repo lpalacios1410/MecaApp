@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { deleteVehicle } from "./actions";
 import { getUserVehicles } from "@/lib/supabase/helpers";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,17 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus, Trash2, Car, Bike } from "lucide-react";
+import { Plus, Car, Bike } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DeleteVehicleButton } from "@/components/dashboard/vehicles/delete-vehicle-button";
 import { connection } from "next/server";
-
-async function handleDeleteVehicle(formData: FormData) {
-  "use server";
-  const id = formData.get("vehicleId") as string;
-  if (id) {
-    await deleteVehicle(id);
-  }
-}
 
 export default async function ClientVehiclesPage() {
   await connection();
@@ -84,17 +76,10 @@ export default async function ClientVehiclesPage() {
                     {!vehicle.vehicle_type && (
                       <Badge variant="secondary">Sin clasificar</Badge>
                     )}
-                    <form action={handleDeleteVehicle}>
-                      <input type="hidden" name="vehicleId" value={vehicle.id} />
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </form>
+                    <DeleteVehicleButton
+                      vehicleId={vehicle.id}
+                      vehicleLabel={`${vehicle.brand} ${vehicle.model} (${vehicle.plate})`}
+                    />
                   </div>
                 </div>
               </CardHeader>

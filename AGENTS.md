@@ -9,16 +9,18 @@
 
 ## Environment
 - Needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (this exact name, **not** `..._ANON_KEY`). Optional: `NEXT_PUBLIC_SITE_URL` (auth email redirect origin); Vercel provides `VERCEL_URL`.
+- Server-only secrets: `SUPABASE_SERVICE_ROLE_KEY` (used by `lib/supabase/admin.ts` to assign roles and bypass RLS from trusted server code; never prefix with `NEXT_PUBLIC`). Role allowlist: `MECHANIC_EMAILS` and `ADMIN_EMAILS` (comma-separated). New signups are always `user`; the signup action promotes them if they match the allowlist.
 - README is stale: it claims Next 15 + HeroUI, but the app is **Next.js 16 (Turbopack)** using shadcn/Radix.
 
 ## Architecture
-- App Router only. Data reads live in `lib/supabase/helpers.ts` (memoized with `React.cache`); prefer these over ad-hoc Supabase queries in routes.
+- App Router only. Data reads live in `lib/supabase/helpers.ts` (memoized with `React.cache`); prefer these over ad-hoc Supabase queries in routes. List helpers now distinguish "empty" from "error" by throwing (caught by `app/error.tsx`).
 - Supabase SSR cookie sessions: `lib/supabase/server.ts` (server, cached), `lib/supabase/client.ts` (browser), `lib/supabase/proxy.ts` (`updateSession`, called from the root `proxy.ts`).
 - `proxy.ts` at repo root is Next 16's middleware (renamed from `middleware.ts`); keep it at root. It is in `eslint.config.mjs` ignores.
-- Auth/roles: route groups `app/(auth)` and `app/dashboard/{client,mechanic}`. Gate with `requireRole(...)` in the `client`/`mechanic` layouts; server actions re-check it.
+- Auth/roles: `user | mechanic | admin`. Route groups `app/(auth)` and `app/dashboard/{client,mechanic,admin}`. Gate with `requireRole(...)` in the `client`/`mechanic`/`admin` layouts; server actions re-check it. `lib/auth/roles.ts` maps emails to roles.
 - Dashboard pages `await connection()` to force dynamic rendering. Keep this when adding data pages, or Next may statically optimize them.
-- DB schema is `supabase-schema.sql` at repo root (not a migrations folder) and is applied manually in the Supabase SQL editor; RLS policies and indexes live there.
-- Plans live in the Supabase `plans` table (global catalog). `getActivePlans()`/`getAllPlans()` in `lib/supabase/helpers.ts` are the data source; `lib/plans-data.ts` only holds types. Mechanics manage the catalog via `app/dashboard/mechanic/plans`; `orders` snapshot `plan_id`/`plan_name`/`plan_price_usd`, so editing or deleting a plan does not change existing orders. `get_plan_order_counts()` (SECURITY DEFINER, in `supabase-schema.sql`) counts orders globally for mechanics and is used to block deleting plans with orders.
+- DB schema is `supabase-schema.sql` at repo root (idempotent, not a migrations folder) and is applied manually in the Supabase SQL editor; RLS policies, indexes and validation triggers live there. For existing databases apply `supabase-migration-*.sql` instead.
+- Plans live in the Supabase `plans` table (global catalog). `getActivePlans()`/`getAllPlans()` in `lib/supabase/helpers.ts` are the data source; `lib/plans-data.ts` only holds types. **Only admins** manage the catalog via `app/dashboard/admin/plans`; mechanics only read it. `orders` snapshot `plan_id`/`plan_name`/`plan_price_usd`, so editing or deleting a plan does not change existing orders. `get_plan_order_counts()` (SECURITY DEFINER, admin-guarded) blocks deleting plans with orders.
+- Profile security is enforced in the DB: `prevent_profile_privilege_escalation` blocks non-`service_role` writes to `role`/`email`, and `validate_order` derives plan data and checks ownership/roles on insert so PostgREST cannot bypass server actions.
 
 ## Conventions / gotchas
 - `@/*` maps to the repo root (see `tsconfig.json`).

@@ -23,14 +23,37 @@ export async function deleteOrder(id: string): Promise<ActionResult> {
     return { status: "error", error: "No autenticado." }
   }
 
+  const { data: order, error: fetchError } = await supabase
+    .from("orders")
+    .select("status")
+    .eq("id", id)
+    .eq("client_id", user.id)
+    .maybeSingle()
+
+  if (fetchError || !order) {
+    return {
+      status: "error",
+      error: "No se encontró la orden (no existe o no tienes permiso).",
+    }
+  }
+
+  if (order.status !== "pending") {
+    return {
+      status: "error",
+      error: "Solo puedes eliminar solicitudes pendientes.",
+    }
+  }
+
   const { data, error } = await supabase
     .from("orders")
     .delete()
     .eq("id", id)
     .eq("client_id", user.id)
+    .eq("status", "pending")
     .select("id")
 
   if (error) {
+    console.error("[deleteOrder]", error)
     return { status: "error", error: "Error al eliminar la orden." }
   }
 

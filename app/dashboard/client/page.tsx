@@ -3,6 +3,7 @@ import {
   getUserProfile,
   getUserVehicles,
   getClientOrders,
+  getClientOrdersStats,
 } from "@/lib/supabase/helpers";
 import { redirect } from "next/navigation";
 import {
@@ -27,19 +28,19 @@ import { connection } from "next/server";
 
 export default async function ClientDashboardPage() {
   await connection();
-  const [profile, vehicles, orders] = await Promise.all([
+  const [profile, vehicles, stats, latestOrders] = await Promise.all([
     getUserProfile(),
     getUserVehicles(),
-    getClientOrders(),
+    getClientOrdersStats(),
+    getClientOrders(1, 3),
   ]);
 
   if (vehicles.length === 0) {
     redirect("/dashboard/client/vehicles/new");
   }
 
-  const pendingOrders = orders.filter(
-    (order) => order.status === "pending"
-  ).length;
+  const orders = latestOrders.items;
+  const pendingOrders = stats.pending;
 
   return (
     <div className="space-y-8">
@@ -88,10 +89,10 @@ export default async function ClientDashboardPage() {
               <ClipboardList className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{orders.length}</div>
+              <div className="text-2xl font-bold">{stats.total}</div>
               <p className="text-xs text-muted-foreground">
                 {pendingOrders} pendiente{pendingOrders !== 1 ? "s" : ""} de{" "}
-                {orders.length} solicitud{orders.length !== 1 ? "es" : ""}
+                {stats.total} solicitud{stats.total !== 1 ? "es" : ""}
               </p>
             </CardContent>
           </Card>
@@ -135,7 +136,7 @@ export default async function ClientDashboardPage() {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold">Últimas Órdenes</h3>
-          {orders.length > 0 && (
+          {stats.total > 0 && (
             <Link
               href="/dashboard/client/orders"
               className="text-sm text-primary hover:underline"
@@ -162,7 +163,7 @@ export default async function ClientDashboardPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {orders.slice(0, 3).map((order) => (
+            {orders.map((order) => (
               <Card key={order.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">

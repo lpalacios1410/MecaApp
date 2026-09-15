@@ -13,7 +13,7 @@ export default async function LoginPage({
   const { error } = await searchParams
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+    <main className="flex min-h-dvh items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Inicia Sesion</CardTitle>

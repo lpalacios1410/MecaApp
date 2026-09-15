@@ -11,6 +11,18 @@ export default {
   ],
   theme: {
     extend: {
+      fontSize: {
+        xs: ["clamp(0.75rem, 0.72rem + 0.15vw, 0.875rem)", { lineHeight: "1.25" }],
+        sm: ["clamp(0.875rem, 0.84rem + 0.175vw, 1rem)", { lineHeight: "1.5" }],
+        base: ["clamp(1rem, 0.97rem + 0.15vw, 1.125rem)", { lineHeight: "1.5" }],
+        lg: ["clamp(1.125rem, 1.06rem + 0.325vw, 1.25rem)", { lineHeight: "1.75" }],
+        xl: ["clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem)", { lineHeight: "1.6" }],
+        "2xl": ["clamp(1.5rem, 1.35rem + 0.75vw, 2rem)", { lineHeight: "1.3" }],
+        "3xl": ["clamp(1.875rem, 1.65rem + 1.125vw, 2.5rem)", { lineHeight: "1.2" }],
+        "4xl": ["clamp(2.25rem, 1.9rem + 1.75vw, 3rem)", { lineHeight: "1.15" }],
+        "5xl": ["clamp(2.75rem, 2.25rem + 2.5vw, 3.75rem)", { lineHeight: "1" }],
+        "6xl": ["clamp(3.25rem, 2.6rem + 3.25vw, 4.5rem)", { lineHeight: "1" }],
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

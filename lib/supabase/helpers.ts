@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import type { Role } from "@/lib/auth/roles";
 import {
   planVehicleTypeLabel,
   type PlanVehicleType,
@@ -10,7 +11,7 @@ export interface UserProfile {
   id: string;
   email: string;
   full_name: string | null;
-  role: "user" | "mechanic";
+  role: Role;
 }
 
 export interface Vehicle {
@@ -72,6 +73,26 @@ export interface OrderWithDetails extends OrderRow {
   mechanic: OrderProfileBrief | null;
 }
 
+export interface Page<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+const DEFAULT_PAGE_SIZE = 12;
+
+const VEHICLE_COLUMNS =
+  "id, client_id, plate, brand, model, year, color, notes, vehicle_type, created_at";
+const ORDER_COLUMNS =
+  "id, client_id, vehicle_id, mechanic_id, plan_id, plan_name, plan_price_usd, vehicle_type, client_notes, status, created_at";
+
+function fail(scope: string, error: unknown): never {
+  console.error(`[supabase:${scope}]`, error);
+  throw new Error("No se pudieron cargar los datos. Inténtalo de nuevo.");
+}
+
 async function getUserId() {
   const supabase = await createClient();
   const user = await getCurrentUser();
@@ -102,20 +123,34 @@ export const getUserProfile = cache(async (): Promise<UserProfile> => {
   if (error || !data) {
     const authUser = await getCurrentUser();
     if (authUser) {
-      await supabase.from("profiles").insert({
-        id: authUser.id,
-        email: authUser.email!,
-        full_name: authUser.user_metadata?.full_name || "",
-        role: authUser.user_metadata?.role || "user",
-      });
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert({
+          id: authUser.id,
+          email: authUser.email!,
+          full_name: authUser.user_metadata?.full_name || "",
+          role: "user",
+        })
+        .select("id")
+        .single();
 
-      const { data: newData } = await supabase
+      if (insertError) {
+        fail("getUserProfile:insert", insertError);
+      }
+
+      const { data: newData, error: newError } = await supabase
         .from("profiles")
         .select("id, email, full_name, role")
         .eq("id", userId)
         .single();
-      if (newData) return newData as UserProfile;
+
+      if (newError || !newData) {
+        fail("getUserProfile:reselect", newError);
+      }
+
+      return newData as UserProfile;
     }
+
     throw new Error("Perfil no encontrado");
   }
 
@@ -127,12 +162,12 @@ export async function getUserVehicles(): Promise<Vehicle[]> {
 
   const { data, error } = await supabase
     .from("vehicles")
-    .select("*")
+    .select(VEHICLE_COLUMNS)
     .eq("client_id", userId)
     .order("created_at", { ascending: false });
 
   if (error) {
-    return [];
+    fail("getUserVehicles", error);
   }
 
   return (data as Vehicle[]) || [];
@@ -147,7 +182,7 @@ export async function getUserVehiclesCount(): Promise<number> {
     .eq("client_id", userId);
 
   if (error || count === null) {
-    return 0;
+    fail("getUserVehiclesCount", error);
   }
 
   return count;
@@ -162,20 +197,13 @@ export async function getClientsCount(): Promise<number> {
     .eq("role", "user");
 
   if (error || count === null) {
-    return 0;
+    fail("getClientsCount", error);
   }
 
   return count;
 }
 
-const MECHANICS_TTL_MS = 60_000;
-let mechanicsCache: { data: Mechanic[]; expiresAt: number } | null = null;
-
-export async function getMechanics(): Promise<Mechanic[]> {
-  if (mechanicsCache && mechanicsCache.expiresAt > Date.now()) {
-    return mechanicsCache.data;
-  }
-
+export const getMechanics = cache(async (): Promise<Mechanic[]> => {
   const { supabase } = await getUserId();
 
   const { data, error } = await supabase
@@ -185,13 +213,11 @@ export async function getMechanics(): Promise<Mechanic[]> {
     .order("full_name", { ascending: true });
 
   if (error) {
-    return [];
+    fail("getMechanics", error);
   }
 
-  const mechanics = (data as Mechanic[]) || [];
-  mechanicsCache = { data: mechanics, expiresAt: Date.now() + MECHANICS_TTL_MS };
-  return mechanics;
-}
+  return (data as Mechanic[]) || [];
+});
 
 interface PlanRow {
   id: string;
@@ -237,7 +263,7 @@ export const getActivePlans = cache(async (): Promise<ServicePlan[]> => {
     .order("price_usd", { ascending: true });
 
   if (error || !data) {
-    return [];
+    fail("getActivePlans", error);
   }
 
   return (data as PlanRow[]).map(mapPlanRow);
@@ -253,7 +279,7 @@ export const getAllPlans = cache(async (): Promise<ServicePlan[]> => {
     .order("price_usd", { ascending: true });
 
   if (error || !data) {
-    return [];
+    fail("getAllPlans", error);
   }
 
   return (data as PlanRow[]).map(mapPlanRow);
@@ -268,28 +294,38 @@ export async function getPlanById(id: string): Promise<ServicePlan | null> {
     .eq("id", id)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    fail("getPlanById", error);
+  }
+
+  if (!data) {
     return null;
   }
 
   return mapPlanRow(data as PlanRow);
 }
 
-export async function getPlanOrderCounts(): Promise<Record<string, number>> {
+export interface PlanOrderCounts {
+  counts: Record<string, number>;
+  error: Error | null;
+}
+
+export async function getPlanOrderCounts(): Promise<PlanOrderCounts> {
   const supabase = await createClient();
 
   const { data, error } = await supabase.rpc("get_plan_order_counts");
 
-  if (error || !data) {
-    return {};
+  if (error) {
+    console.error("[supabase:getPlanOrderCounts]", error);
+    return { counts: {}, error: new Error(error.message) };
   }
 
   const counts: Record<string, number> = {};
-  for (const row of data as { plan_id: string; order_count: number }[]) {
+  for (const row of (data ?? []) as { plan_id: string; order_count: number }[]) {
     counts[row.plan_id] = Number(row.order_count);
   }
 
-  return counts;
+  return { counts, error: null };
 }
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -312,6 +348,10 @@ async function attachOrderDetails(
     supabase.from("profiles").select("id, full_name, email").in("id", profileIds),
   ]);
 
+  if (vehiclesRes.error || profilesRes.error) {
+    fail("attachOrderDetails", vehiclesRes.error ?? profilesRes.error);
+  }
+
   const vehiclesById = new Map<string, OrderVehicleBrief>();
   for (const vehicle of (vehiclesRes.data as OrderVehicleBrief[] | null) || []) {
     vehiclesById.set(vehicle.id, vehicle);
@@ -330,34 +370,147 @@ async function attachOrderDetails(
   }));
 }
 
-export async function getClientOrders(): Promise<OrderWithDetails[]> {
-  const { supabase, userId } = await getUserId();
-
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*")
-    .eq("client_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error || !data) {
-    return [];
-  }
-
-  return attachOrderDetails(supabase, data as OrderRow[]);
+function normalizePage(page: number) {
+  return Number.isFinite(page) && page > 0 ? Math.trunc(page) : 1;
 }
 
-export async function getMechanicOrders(): Promise<OrderWithDetails[]> {
+async function getOrdersPage(
+  scope: string,
+  column: "client_id" | "mechanic_id",
+  page: number,
+  pageSize: number
+): Promise<Page<OrderWithDetails>> {
   const { supabase, userId } = await getUserId();
+  const safePage = normalizePage(page);
+  const safeSize = pageSize > 0 ? Math.trunc(pageSize) : DEFAULT_PAGE_SIZE;
+  const from = (safePage - 1) * safeSize;
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from("orders")
-    .select("*")
-    .eq("mechanic_id", userId)
-    .order("created_at", { ascending: false });
+    .select(ORDER_COLUMNS, { count: "exact" })
+    .eq(column, userId)
+    .order("created_at", { ascending: false })
+    .range(from, from + safeSize - 1);
 
   if (error || !data) {
-    return [];
+    fail(scope, error);
   }
 
-  return attachOrderDetails(supabase, data as OrderRow[]);
+  const total = count ?? 0;
+  const items = await attachOrderDetails(supabase, data as OrderRow[]);
+
+  return {
+    items,
+    total,
+    page: safePage,
+    pageSize: safeSize,
+    totalPages: Math.max(1, Math.ceil(total / safeSize)),
+  };
+}
+
+export function getClientOrders(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE
+): Promise<Page<OrderWithDetails>> {
+  return getOrdersPage("getClientOrders", "client_id", page, pageSize);
+}
+
+export function getMechanicOrders(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE
+): Promise<Page<OrderWithDetails>> {
+  return getOrdersPage("getMechanicOrders", "mechanic_id", page, pageSize);
+}
+
+async function countOrders(
+  scope: string,
+  column: "client_id" | "mechanic_id",
+  status?: OrderStatus
+): Promise<number> {
+  const { supabase, userId } = await getUserId();
+
+  let query = supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq(column, userId);
+
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  const { count, error } = await query;
+
+  if (error || count === null) {
+    fail(scope, error);
+  }
+
+  return count;
+}
+
+export interface OrderStats {
+  total: number;
+  pending: number;
+}
+
+export async function getClientOrdersStats(): Promise<OrderStats> {
+  const [total, pending] = await Promise.all([
+    countOrders("getClientOrdersStats:total", "client_id"),
+    countOrders("getClientOrdersStats:pending", "client_id", "pending"),
+  ]);
+  return { total, pending };
+}
+
+export async function getMechanicOrdersStats(): Promise<OrderStats> {
+  const [total, pending] = await Promise.all([
+    countOrders("getMechanicOrdersStats:total", "mechanic_id"),
+    countOrders("getMechanicOrdersStats:pending", "mechanic_id", "pending"),
+  ]);
+  return { total, pending };
+}
+
+export interface UserAdminRow {
+  id: string;
+  email: string;
+  full_name: string | null;
+  role: Role;
+  created_at: string;
+}
+
+const USER_ADMIN_COLUMNS = "id, email, full_name, role, created_at";
+
+export async function getUsersPage(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  role?: Role
+): Promise<Page<UserAdminRow>> {
+  const { supabase } = await getUserId();
+  const safePage = normalizePage(page);
+  const safeSize = pageSize > 0 ? Math.trunc(pageSize) : DEFAULT_PAGE_SIZE;
+  const from = (safePage - 1) * safeSize;
+
+  let query = supabase
+    .from("profiles")
+    .select(USER_ADMIN_COLUMNS, { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(from, from + safeSize - 1);
+
+  if (role) {
+    query = query.eq("role", role);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error || !data) {
+    fail("getUsersPage", error);
+  }
+
+  const total = count ?? 0;
+
+  return {
+    items: (data as UserAdminRow[]) || [],
+    total,
+    page: safePage,
+    pageSize: safeSize,
+    totalPages: Math.max(1, Math.ceil(total / safeSize)),
+  };
 }

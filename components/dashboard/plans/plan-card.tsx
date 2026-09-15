@@ -60,8 +60,8 @@ export function PlanCard({
           <span className="text-sm text-muted-foreground"> USD / {plan.period}</span>
         </div>
         <ul className="flex-1 space-y-2 text-sm text-muted-foreground">
-          {plan.services.map((service) => (
-            <li key={service} className="flex items-start gap-2">
+          {plan.services.map((service, index) => (
+            <li key={index} className="flex items-start gap-2">
               <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               {service}
             </li>
@@ -69,9 +69,7 @@ export function PlanCard({
         </ul>
         {showAction && (
           <Link href="/dashboard/client/request" className="w-full">
-            <Button className="w-full bg-default border">
-              Solicitar servicio
-            </Button>
+            <Button className="w-full">Solicitar servicio</Button>
           </Link>
         )}
       </CardContent>

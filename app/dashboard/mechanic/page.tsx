@@ -1,6 +1,10 @@
 import Link from "next/link";
-import { getUserProfile, getClientsCount, getMechanicOrders } from "@/lib/supabase/helpers";
-import { Users, Wrench, FileText, ClipboardList } from "lucide-react";
+import {
+  getUserProfile,
+  getClientsCount,
+  getMechanicOrdersStats,
+} from "@/lib/supabase/helpers";
+import { Users, FileText, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,12 +16,12 @@ import { connection } from "next/server";
 
 export default async function MechanicDashboardPage() {
   await connection();
-  const [profile, total, orders] = await Promise.all([
+  const [profile, total, stats] = await Promise.all([
     getUserProfile(),
     getClientsCount(),
-    getMechanicOrders(),
+    getMechanicOrdersStats(),
   ]);
-  const pendingOrders = orders.filter((o) => o.status === "pending").length;
+  const pendingOrders = stats.pending;
 
   return (
     <div className="space-y-8">
@@ -54,22 +58,16 @@ export default async function MechanicDashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{pendingOrders}</div>
             <p className="text-xs text-muted-foreground">
-              Pendiente{pendingOrders !== 1 ? "s" : ""} de {orders.length} solicitud
-              {orders.length !== 1 ? "es" : ""}
+              Pendiente{pendingOrders !== 1 ? "s" : ""} de {stats.total} solicitud
+              {stats.total !== 1 ? "es" : ""}
             </p>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex flex-wrap gap-4">
-        <Link href="/dashboard/mechanic/plans">
-          <Button size="lg">
-            <Wrench className="h-4 w-4 mr-2" />
-            Gestionar Planes
-          </Button>
-        </Link>
         <Link href="/dashboard/mechanic/orders">
-          <Button size="lg" variant="outline">
+          <Button size="lg">
             <FileText className="h-4 w-4 mr-2" />
             Ver Órdenes
           </Button>
