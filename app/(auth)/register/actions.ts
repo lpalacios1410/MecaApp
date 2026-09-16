@@ -8,28 +8,39 @@ import { resolveRoleFromAllowlist } from "@/lib/auth/roles"
 
 export async function signup(formData: FormData) {
   const fullName = String(formData.get("fullName") ?? "").trim()
-  const email = String(formData.get("email") ?? "").trim()
+  const email = String(formData.get("email") ?? "").trim().toLowerCase()
   const password = String(formData.get("password") ?? "")
 
   if (fullName.length < 3) {
-    redirect("/register?error=Escribe tu nombre completo")
+    redirect(`/register?error=${encodeURIComponent("Escribe tu nombre completo")}`)
   }
 
   if (!email.includes("@")) {
-    redirect("/register?error=Escribe un correo valido")
+    redirect(`/register?error=${encodeURIComponent("Escribe un correo válido")}`)
   }
 
   if (password.length < 8) {
-    redirect("/register?error=La clave debe tener al menos 8 caracteres")
+    redirect(
+      `/register?error=${encodeURIComponent("La clave debe tener al menos 8 caracteres")}`
+    )
   }
 
   const supabase = await createClient()
   const headerList = await headers()
 
+  const allowedOrigins = new Set(
+    [
+      process.env.NEXT_PUBLIC_SITE_URL,
+      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+      "http://localhost:3000",
+    ].filter((value): value is string => Boolean(value))
+  )
+  const requestOrigin = headerList.get("origin")
   const origin =
-    headerList.get("origin") ??
     process.env.NEXT_PUBLIC_SITE_URL ??
-    "http://localhost:3000"
+    (requestOrigin && allowedOrigins.has(requestOrigin)
+      ? requestOrigin
+      : "http://localhost:3000")
 
   const { data, error } = await supabase.auth.signUp({
     email,
