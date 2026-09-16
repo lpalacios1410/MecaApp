@@ -26,7 +26,35 @@ export async function setUserRole(id: string, role: Role): Promise<ActionResult>
     return { status: "error", error: "No puedes cambiar tu propio rol." }
   }
 
-  const admin = createAdminClient()
+  let admin: ReturnType<typeof createAdminClient>
+  try {
+    admin = createAdminClient()
+  } catch (adminError) {
+    console.error("[setUserRole] createAdminClient:", adminError)
+    return {
+      status: "error",
+      error:
+        "El servidor no tiene SUPABASE_SERVICE_ROLE_KEY configurado. Agrégalo en los secrets de despliegue.",
+    }
+  }
+
+  const { data: target } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", id)
+    .maybeSingle()
+
+  if (!target) {
+    return { status: "error", error: "No se encontró al usuario." }
+  }
+
+  if (target.role === "admin") {
+    return {
+      status: "error",
+      error: "No puedes cambiar el rol de otro administrador.",
+    }
+  }
+
   const { data, error } = await admin
     .from("profiles")
     .update({ role })
