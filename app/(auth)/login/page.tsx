@@ -16,7 +16,7 @@ export default async function LoginPage({
     <main className="flex min-h-dvh items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Inicia Sesion</CardTitle>
+          <CardTitle>Inicia Sesión</CardTitle>
         </CardHeader>
 
         <CardContent>
@@ -54,14 +54,14 @@ export default async function LoginPage({
             
 
             <Button className="w-full" type="submit">
-              Iniciar sesion
+              Iniciar Sesión
             </Button>
           </form>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            ¿Aun no tienes cuenta?{" "}
+            ¿Aún no tienes cuenta?{" "}
             <Link className="underline" href="/register">
-              Registrate aqui!
+              Regístrate aquí.
             </Link>
           </p>
         </CardContent>
