@@ -9,7 +9,7 @@ const defaultUrl = process.env.VERCEL_URL
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
   title: "MecaApp",
-  description: "La App para poder adquirir un plan para el cuidado de tu vehiculo",
+  description: "La App para poder adquirir un plan para el cuidado de tu vehículo",
 };
 
 const geistSans = Geist({
