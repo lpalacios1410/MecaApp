@@ -20,7 +20,7 @@ export async function login(formData: FormData) {
   })
 
   if (error || !user) {
-    redirect("/login?error=Correo o clave incorrectos")
+    redirect(`/login?error=${encodeURIComponent("Correo o clave incorrectos")}`)
   }
 
   const { data: profile } = await supabase

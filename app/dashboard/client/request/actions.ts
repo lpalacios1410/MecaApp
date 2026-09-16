@@ -74,5 +74,7 @@ export async function createOrder(formData: FormData) {
     return { error: "No se pudo crear la solicitud. Inténtalo de nuevo." }
   }
 
-  redirect("/dashboard/client/orders?success=Solicitud enviada correctamente")
+  redirect(
+    `/dashboard/client/orders?success=${encodeURIComponent("Solicitud enviada correctamente")}`
+  )
 }
