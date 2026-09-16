@@ -230,7 +230,9 @@ export async function duplicatePlan(id: string): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: plan, error: fetchError } = await supabase
     .from("plans")
-    .select("*")
+    .select(
+      "name, vehicle_type, tagline, price_usd, period, services, sort_order"
+    )
     .eq("id", id)
     .maybeSingle()
 
