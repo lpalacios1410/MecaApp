@@ -27,7 +27,7 @@ export default function ConfirmEmailPage() {
           <p className="text-sm text-muted-foreground">
             ¿No lo recibiste? Revisa tu carpeta de spam o correo no deseado.
           </p>
-          <Link href="/">
+          <Link href="/login">
             <Button variant="outline" className="w-full">
               Volver al Inicio de Sesión
             </Button>
