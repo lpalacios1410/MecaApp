@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import { redirect } from "next/navigation";
 import { Bike, Car, Plus } from "lucide-react";
 import { getUserVehicles, getActivePlans } from "@/lib/supabase/helpers";
 import { updateVehicleType } from "../vehicles/actions";
@@ -17,9 +18,34 @@ async function handleClassifyVehicle(formData: FormData) {
   "use server";
   const vehicleId = formData.get("vehicleId") as string;
   const vehicleType = formData.get("vehicleType") as string;
-  if (vehicleId && vehicleType) {
-    await updateVehicleType(vehicleId, vehicleType);
+  if (!vehicleId || !vehicleType) {
+    return;
   }
+  const result = await updateVehicleType(vehicleId, vehicleType);
+  if (result?.error) {
+    redirect(`/dashboard/client/plans?err=${encodeURIComponent(result.error)}`);
+  }
+  redirect(
+    `/dashboard/client/plans?msg=${encodeURIComponent("Vehículo clasificado correctamente")}`
+  );
+}
+
+function FlashBanner({ message, error }: { message?: string; error?: string }) {
+  if (error) {
+    return (
+      <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+        {error}
+      </div>
+    );
+  }
+  if (message) {
+    return (
+      <div className="rounded-md border border-emerald-500/50 bg-emerald-500/10 p-3 text-sm text-emerald-400">
+        {message}
+      </div>
+    );
+  }
+  return null;
 }
 
 function PageHeader({ subtitle }: { subtitle: string }) {
@@ -31,8 +57,13 @@ function PageHeader({ subtitle }: { subtitle: string }) {
   );
 }
 
-export default async function ClientPlansPage() {
+export default async function ClientPlansPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ msg?: string; err?: string }>;
+}) {
   await connection();
+  const { msg, err } = await searchParams;
   const [vehicles, plans] = await Promise.all([
     getUserVehicles(),
     getActivePlans(),
@@ -65,6 +96,7 @@ export default async function ClientPlansPage() {
     return (
       <div className="space-y-8">
         <PageHeader subtitle="Clasifica tus vehículos para mostrarte los planes correctos" />
+        <FlashBanner message={msg} error={err} />
         <div className="grid gap-4 md:grid-cols-2">
           {unclassified.map((vehicle) => (
             <Card key={vehicle.id}>
@@ -123,6 +155,7 @@ export default async function ClientPlansPage() {
   return (
     <div className="space-y-10">
       <PageHeader subtitle={subtitle} />
+      <FlashBanner message={msg} error={err} />
 
       {hasCar && (
         <section className="space-y-4">
