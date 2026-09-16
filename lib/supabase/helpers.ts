@@ -364,6 +364,7 @@ async function attachOrderDetails(
 
   return orders.map((order) => ({
     ...order,
+    plan_price_usd: Number(order.plan_price_usd),
     vehicle: vehiclesById.get(order.vehicle_id) ?? null,
     client: profilesById.get(order.client_id) ?? null,
     mechanic: profilesById.get(order.mechanic_id) ?? null,
