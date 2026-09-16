@@ -2,11 +2,11 @@
 
 Plataforma Web Progresiva (**PWA Mobile-First**) diseñada para conectar a propietarios de vehículos (carros y motos) con mecánicos independientes y talleres especializados en Venezuela.
 
-Lejos de un directorio estático tradicional, el sitio se siente como un **panel de control automotriz e industrial**: _dark mode_ profundo, tarjetas de selección táctiles, geolocalización en tiempo real, telemetría de talleres y flujos de trabajo optimizados para móviles.
+Es un **panel de control automotriz** en modo oscuro: los clientes gestionan sus vehículos y solicitan planes de mantenimiento a mecánicos, y los administradores controlan el catálogo de planes y los roles de la plataforma.
 
-![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.4-06b6d4?logo=tailwindcss&logoColor=white)
-![HeroUI](https://img.shields.io/badge/HeroUI-2.0-f97316?logo=react&logoColor=white)
+![shadcn](https://img.shields.io/badge/shadcn%2FUI-Radix-f97316?logo=react&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?logo=supabase&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 
@@ -23,14 +23,12 @@ Lejos de un directorio estático tradicional, el sitio se siente como un **panel
 
 ## ✨ Características
 
-- **Onboarding de Mecánicos interactivo** — formulario por pasos (Stepper) que permite configurar:
-  - **Especialización de Vehículos:** Selección dinámica entre _Vehículos Ligeros_ (Sedanes, SUVs), _Carga Pesada_ y _Motocicletas_.
-  - **Categorías de Servicio:** Selector tipo cápsula (_Chips_) para activar especialidades (Motor, Transmisión, Frenos, Electricidad, A/C, Escáner, Suspensión).
-  - **Geolocalización:** Mapa interactivo centrado en la ubicación base (ej. Caracas) con selector de Zona / Municipio y Código Postal.
-  - **Servicios Especiales:** Toggle reactivo para activar la disponibilidad de _Servicio a Domicilio / Grúa / Auxilio Vial_.
-- **Gestión de Vehículos para Clientes** — registro de garaje personal para asociar vehículos (Marca, Modelo, Año, Placa) a las solicitudes de servicio.
-- **Planes de Suscripción Integrados** — esquema de 3 niveles (Básico, Pro, Elite) con ventajas de posicionamiento en el directorio y métricas.
-- **Seguridad nativa (RLS)** — protección de datos relacionales en PostgreSQL asegurando que cada mecánico o cliente solo modifique la información que le pertenece.
+- **Gestión de Vehículos para Clientes** — registro del garaje personal (marca, modelo, año, placa) con clasificación carro/moto antes de solicitar un servicio.
+- **Catálogo de Planes** — los administradores crean, editan, destacan, activan y duplican los planes que ven los clientes según el tipo de vehículo.
+- **Solicitud de Servicio** — el cliente elige mecánico, vehículo y plan; el precio queda congelado (snapshot) en la orden.
+- **Flujo de Órdenes del Mecánico** — transiciones validadas de estado: pendiente → aceptada → en progreso → completada (o cancelada en cualquier punto).
+- **Roles y Permisos** — tres roles (cliente, mecánico, administrador) con panel propio; los administradores promueven mecánicos desde el gestor de usuarios.
+- **Seguridad nativa (RLS)** — protección de datos en PostgreSQL: cada usuario solo accede a lo que le pertenece, y la escalada de privilegios está bloqueada por triggers.
 
 ---
 
@@ -38,7 +36,7 @@ Lejos de un directorio estático tradicional, el sitio se siente como un **panel
 
 | Herramienta          | Rol                                                                           |
 | -------------------- | ----------------------------------------------------------------------------- |
-| **Next.js 15**       | Framework React con App Router, SSR y Server Actions                          |
+| **Next.js 16**       | Framework React con App Router, SSR y Server Actions (Turbopack)              |
 | **Tailwind CSS 3.4** | Estilos atómicos y tokens de diseño personalizados (`tailwind.config.ts`)     |
 | **Shadcn (NextJS)**  | Librería de componentes accesibles para UI (_Cards, Chips, Switches, Modals_) |
 | **Supabase**         | Backend-as-a-Service (PostgreSQL, Supabase Auth y Row Level Security)         |
