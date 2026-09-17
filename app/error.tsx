@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +22,7 @@ export default function Error({
         No pudimos cargar esta sección. Inténtalo de nuevo.
       </p>
       <Button onClick={() => reset()}>Reintentar</Button>
+      <Button><Link href="/">Ir al inicio</Link></Button>
     </div>
   );
 }
