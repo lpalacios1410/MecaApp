@@ -22,7 +22,7 @@ const steps = [
     icon: MapPin,
     title: "Encuentra un Mecánico",
     description:
-      "Explora el directorio con geolocalización, filtra por especialidad y zona.",
+      "Registra tu vehiculo, selecciona el plan que mas se adapte a tus requerimientos.",
   },
   {
     number: "03",
