@@ -16,7 +16,7 @@ Es un **panel de control automotriz** en modo oscuro: los clientes gestionan sus
 
 |     Versión Desktop (Panel de Configuración)     |
 | :----------------------------------------------: | 
-|    ![MecaApp Desktop Setup](https://github.com/lpalacios1410/MecaApp/blob/1ea9a24af456880cfd089575a494f0e52096147f/public/mecaApp.jpg)
+|    ![MecaApp Desktop Setup](https://github.com/lpalacios1410/MecaApp/blob/5f79ac88aad0ffafe2e6ce369b2e1f5d24b70e0f/public/MecaApp2.jpg)
 | _Vista ampliada para gestión de perfil y taller_ |
 
 ---
