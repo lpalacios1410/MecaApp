@@ -42,3 +42,29 @@ Es un **panel de control automotriz** en modo oscuro: los clientes gestionan sus
 | **Supabase**         | Backend-as-a-Service (PostgreSQL, Supabase Auth y Row Level Security)         |
 | **TypeScript**       | Tipado estricto en toda la aplicación y esquemas de base de datos             |
 | **Lucide React**     | Conjunto de íconos                                                            |
+
+---
+
+## ⚙️ Configuración (un solo `.env`)
+
+Cada instancia (cliente/empresa) se despliega con el mismo código y **un único archivo `.env`** (ver `.env.example`):
+
+| Variable                                | Required | Descripción                                                       |
+| --------------------------------------- | -------- | ----------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`              | Sí       | URL del proyecto Supabase **propio** de ese cliente.              |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`  | Sí       | Clave pública (publishable) de ese proyecto.                      |
+| `SUPABASE_SERVICE_ROLE_KEY`             | Sí       | Secreto del servidor para asignar roles (nunca exponer al cliente). |
+| `OWNER_EMAIL`                           | Sí       | Correo global/propietario: se promueve a admin al registrarse.    |
+| `NEXT_PUBLIC_SITE_URL`                  | No       | Origen para correos de confirmación (en Vercel se deriva solo).    |
+
+**Modelo de roles:** el `OWNER_EMAIL` es el único rol definido por configuración. Ese correo inicia sesión, y desde **Usuarios** promueve administradores y mecánicos con sus correos propios; una vez promovidos, funcionan con su correo sin depender del global. Solo el propietario puede crear/degradar administradores.
+
+---
+
+## 🚀 Alta de un cliente nuevo (multi-instancia)
+
+1. Crear un **proyecto Supabase** nuevo para el cliente y aplicar `supabase-schema.sql` en el SQL Editor.
+2. Crear un **proyecto de hosting** (p. ej., Vercel) apuntando al mismo repositorio/rama base.
+3. Configurar las 4 variables del `.env` del paso anterior en los secrets del despliegue.
+4. Pedir al cliente que se registre con su `OWNER_EMAIL`: quedará como administrador automáticamente.
+5. El cliente promueve a su equipo (admins/mecánicos) desde el panel. Cobrar la membresía y listo.

@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache"
 import { requireRole } from "@/lib/auth/require-role"
 import { createAdminClient } from "@/lib/supabase/admin"
-import type { Role } from "@/lib/auth/roles"
+import { isOwnerEmail, type Role } from "@/lib/auth/roles"
 
 type ActionResult =
   | { status: "success"; message: string }
   | { status: "error"; error: string }
 
-const ASSIGNABLE_ROLES: Role[] = ["user", "mechanic"]
+const ASSIGNABLE_ROLES: Role[] = ["user", "mechanic", "admin"]
 
 export async function setUserRole(id: string, role: Role): Promise<ActionResult> {
   const adminProfile = await requireRole("admin")
@@ -26,6 +26,15 @@ export async function setUserRole(id: string, role: Role): Promise<ActionResult>
     return { status: "error", error: "No puedes cambiar tu propio rol." }
   }
 
+  const actorIsOwner = isOwnerEmail(adminProfile.email)
+
+  if (role === "admin" && !actorIsOwner) {
+    return {
+      status: "error",
+      error: "Solo el correo propietario puede promover administradores.",
+    }
+  }
+
   let admin: ReturnType<typeof createAdminClient>
   try {
     admin = createAdminClient()
@@ -40,7 +49,7 @@ export async function setUserRole(id: string, role: Role): Promise<ActionResult>
 
   const { data: target } = await admin
     .from("profiles")
-    .select("role")
+    .select("role, email")
     .eq("id", id)
     .maybeSingle()
 
@@ -48,7 +57,14 @@ export async function setUserRole(id: string, role: Role): Promise<ActionResult>
     return { status: "error", error: "No se encontró al usuario." }
   }
 
-  if (target.role === "admin") {
+  if (isOwnerEmail(target.email)) {
+    return {
+      status: "error",
+      error: "No puedes cambiar el rol del correo propietario.",
+    }
+  }
+
+  if (target.role === "admin" && !actorIsOwner) {
     return {
       status: "error",
       error: "No puedes cambiar el rol de otro administrador.",
@@ -73,11 +89,14 @@ export async function setUserRole(id: string, role: Role): Promise<ActionResult>
 
   revalidatePath("/dashboard/admin/users")
 
-  return {
-    status: "success",
-    message:
-      role === "mechanic"
+  const message =
+    role === "admin"
+      ? "Usuario promovido a administrador."
+      : role === "mechanic"
         ? "Usuario promovido a mecánico."
-        : "El usuario volvió a ser cliente.",
-  }
+        : target.role === "admin"
+          ? "El administrador volvió a ser cliente."
+          : "El usuario volvió a ser cliente."
+
+  return { status: "success", message }
 }
