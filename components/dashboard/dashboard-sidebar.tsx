@@ -53,13 +53,16 @@ function getActiveHref(pathname: string, items: { href: string }[]) {
   return active;
 }
 
-function SidebarContent({ role }: DashboardSidebarProps) {
+function SidebarContent({
+  role,
+  onNavigate,
+}: DashboardSidebarProps & { onNavigate?: () => void }) {
   const pathname = usePathname();
   const items = navItemsByRole[role];
   const activeHref = getActiveHref(pathname, items);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col pt-safe pb-safe">
       <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
         <Wrench className="h-6 w-6 text-primary" />
         <span className="text-lg font-bold">MecaApp</span>
@@ -73,8 +76,9 @@ function SidebarContent({ role }: DashboardSidebarProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => onNavigate?.()}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -114,7 +118,7 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
       </div>
 
       {/* Mobile sidebar */}
-      <div className="md:hidden fixed top-0 left-0 z-50 p-2">
+      <div className="md:hidden fixed top-0 left-0 z-50 p-2 pl-[calc(0.5rem+env(safe-area-inset-left))] pt-[calc(0.5rem+env(safe-area-inset-top))]">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button variant="outline" size="icon" className="h-11 w-11">
@@ -122,9 +126,9 @@ export function DashboardSidebar({ role }: DashboardSidebarProps) {
               <span className="sr-only">Abrir menú</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-4/5 max-w-64 p-0" showCloseButton={false}>
+          <SheetContent side="left" className="w-4/5 max-w-64 overflow-y-auto p-0" showCloseButton={false}>
             <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
-            <SidebarContent role={role} />
+            <SidebarContent role={role} onNavigate={() => setOpen(false)} />
           </SheetContent>
         </Sheet>
       </div>

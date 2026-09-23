@@ -15,13 +15,15 @@ function DashboardHeader({ profile }: { profile: UserProfile }) {
         : "Usuario";
 
   return (
-    <header className="sticky top-0 z-40 flex items-center h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 pl-16 md:px-8 md:pl-8">
-      <div className="flex-1 flex min-w-0 items-center justify-between">
-        <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold">
-            Hola, {profile.full_name || profile.email}
-          </h1>
-          <p className="truncate text-sm text-muted-foreground">{roleLabel}</p>
+    <header className="sticky top-0 z-40 pt-safe border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-16 items-center px-4 pl-16 md:px-8 md:pl-8">
+        <div className="flex-1 flex min-w-0 items-center justify-between">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold">
+              Hola, {profile.full_name || profile.email}
+            </h1>
+            <p className="truncate text-sm text-muted-foreground">{roleLabel}</p>
+          </div>
         </div>
       </div>
     </header>
