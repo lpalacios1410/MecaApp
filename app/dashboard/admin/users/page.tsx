@@ -2,7 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Users } from "lucide-react";
 import { getUserProfile, getUsersPage } from "@/lib/supabase/helpers";
-import type { Role } from "@/lib/auth/roles";
+import { isOwnerEmail, type Role } from "@/lib/auth/roles";
 import { UserRowActions } from "@/components/dashboard/admin/user-row-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -127,6 +127,7 @@ export default async function AdminUsersPage({
                     userId={user.id}
                     role={user.role}
                     isSelf={user.id === profile.id}
+                    canManageAdmins={isOwnerEmail(profile.email)}
                   />
                 </CardContent>
               </Card>

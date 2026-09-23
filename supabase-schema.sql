@@ -149,7 +149,7 @@ AS $$
 $$;
 
 -- Crea el profile al registrarse. Siempre nace como 'user'; la promocion a
--- mechanic/admin la hace el servidor (service_role) tras validar la allowlist.
+-- mechanic/admin la hace el servidor (service_role) tras validar el owner/admins.
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql

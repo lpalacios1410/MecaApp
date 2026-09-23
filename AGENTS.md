@@ -9,7 +9,7 @@
 
 ## Environment
 - Needs `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (this exact name, **not** `..._ANON_KEY`). Optional: `NEXT_PUBLIC_SITE_URL` (auth email redirect origin); Vercel provides `VERCEL_URL`.
-- Server-only secrets: `SUPABASE_SERVICE_ROLE_KEY` (used by `lib/supabase/admin.ts` to assign roles and bypass RLS from trusted server code; never prefix with `NEXT_PUBLIC`). Role allowlist: `MECHANIC_EMAILS` and `ADMIN_EMAILS` (comma-separated). New signups are always `user`; the signup action promotes them if they match the allowlist.
+- Server-only secrets: `SUPABASE_SERVICE_ROLE_KEY` (used by `lib/supabase/admin.ts` to assign roles and bypass RLS from trusted server code; never prefix with `NEXT_PUBLIC`). `OWNER_EMAIL` is the single global/owner account per instance: signup promotes it to `admin`, and only it can promote/demote other admins from the admin users UI (promoted admins manage mechanics/users). New signups are always `user` unless they match `OWNER_EMAIL`. Multi-instance SaaS: one Supabase project + one `.env` per client (see `.env.example` and README runbook).
 - README is stale: it claims Next 15 + HeroUI, but the app is **Next.js 16 (Turbopack)** using shadcn/Radix.
 
 ## Architecture

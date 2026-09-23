@@ -28,7 +28,7 @@ export default async function RegisterPage({
   return (
     <AuthShell
       title="Crea tu cuenta"
-      description="Únete a MecaApp como propietario o mecánico. Es gratis y toma segundos."
+      description="Únete a MecaApp como propietario de vehículo. Es gratis y toma segundos."
     >
       {errorInfo && (
         <div className="mb-5 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
