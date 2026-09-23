@@ -80,7 +80,7 @@ export default function NewVehiclePage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="brand">Marca</Label>
                 <Input
@@ -109,6 +109,7 @@ export default function NewVehiclePage() {
                   id="year"
                   name="year"
                   type="number"
+                  inputMode="numeric"
                   placeholder="Ej. 2020"
                   required
                   min={1900}

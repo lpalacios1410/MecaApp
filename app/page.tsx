@@ -35,24 +35,26 @@ const steps = [
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-black text-zinc-50">
-      <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-white/5 bg-black/60 px-6 py-4 backdrop-blur-xl">
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
-          <Wrench size={24} className="text-orange-500" />
-          MecaApp
-        </Link>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="rounded-full px-4 py-2 text-sm font-medium text-zinc-300 transition-all duration-300 hover:bg-white/5 hover:text-white"
-          >
-            Iniciar Sesión
+      <nav className="sticky top-0 z-50 pt-safe border-b border-white/5 bg-black/60 backdrop-blur-xl">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4">
+          <Link href="/" className="flex items-center gap-2 text-lg sm:text-xl font-bold tracking-tight">
+            <Wrench size={24} className="text-orange-500" />
+            MecaApp
           </Link>
-          <Link
-            href="/register"
-            className="rounded-full bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)]"
-          >
-            Registrarse
-          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/login"
+              className="rounded-full px-3 py-2 text-sm font-medium text-zinc-300 transition-all duration-300 hover:bg-white/5 hover:text-white sm:px-4"
+            >
+              Iniciar Sesión
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-full bg-orange-500 px-3 py-2 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-[0_0_20px_rgba(249,115,22,0.4)] sm:px-4"
+            >
+              Registrarse
+            </Link>
+          </div>
         </div>
       </nav>
 
