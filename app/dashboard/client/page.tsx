@@ -194,6 +194,13 @@ export default async function ClientDashboardPage() {
                         : "Vehículo no disponible"}
                     </p>
                     <p>Precio: ${order.plan_price_usd} USD/mes</p>
+                    {order.status === "in_progress" &&
+                      order.steps.length > 0 && (
+                        <p className="text-primary">
+                          Tu servicio va {order.steps.filter((s) => s.done).length}/
+                          {order.steps.length} puntos completados
+                        </p>
+                      )}
                   </div>
                 </CardContent>
               </Card>

@@ -26,7 +26,8 @@ Es un **panel de control automotriz** en modo oscuro: los clientes gestionan sus
 - **Gestión de Vehículos para Clientes** — registro del garaje personal (marca, modelo, año, placa) con clasificación carro/moto antes de solicitar un servicio.
 - **Catálogo de Planes** — los administradores crean, editan, destacan, activan y duplican los planes que ven los clientes según el tipo de vehículo.
 - **Solicitud de Servicio** — el cliente elige mecánico, vehículo y plan; el precio queda congelado (snapshot) en la orden.
-- **Flujo de Órdenes del Mecánico** — transiciones validadas de estado: pendiente → aceptada → en progreso → completada (o cancelada en cualquier punto).
+- **Flujo de Órdenes del Mecánico** — transiciones validadas de estado: pendiente → aceptada → en progreso → completada (o cancelada en cualquier punto). Las órdenes en curso viven en su propia vista **Órdenes Activas**, donde el mecánico trabaja el checklist y desde donde se le redirige al iniciar un servicio.
+- **Checklist de Avance** — cada orden nace con los puntos del plan como pasos; el mecánico añade, quita y marca puntos según avanza el trabajo, y el cliente ve el progreso (X/N con horarios) en "Mis Órdenes".
 - **Roles y Permisos** — tres roles (cliente, mecánico, administrador) con panel propio; los administradores promueven mecánicos desde el gestor de usuarios.
 - **Seguridad nativa (RLS)** — protección de datos en PostgreSQL: cada usuario solo accede a lo que le pertenece, y la escalada de privilegios está bloqueada por triggers.
 

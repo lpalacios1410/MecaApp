@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 interface OrderStatusActionsProps {
   orderId: string
   status: OrderStatus
+  highlightComplete?: boolean
 }
 
 const ACTIONS: Partial<
@@ -30,7 +31,11 @@ const ACTIONS: Partial<
   ],
 }
 
-export function OrderStatusActions({ orderId, status }: OrderStatusActionsProps) {
+export function OrderStatusActions({
+  orderId,
+  status,
+  highlightComplete,
+}: OrderStatusActionsProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -44,7 +49,11 @@ export function OrderStatusActions({ orderId, status }: OrderStatusActionsProps)
       const result = await updateOrderStatus(orderId, next)
       if (result.status === "success") {
         toast.success(result.message)
-        router.refresh()
+        if (next === "in_progress") {
+          router.push("/dashboard/mechanic/orders/active")
+        } else {
+          router.refresh()
+        }
       } else {
         toast.error(result.error)
       }
@@ -56,10 +65,13 @@ export function OrderStatusActions({ orderId, status }: OrderStatusActionsProps)
       {actions.map((action) => {
         const Icon = action.icon
         const isCancel = action.next === "cancelled"
+        const isComplete =
+          action.next === "completed" && Boolean(highlightComplete)
+        const isPrimary = isComplete || action.next === "in_progress"
         return (
           <Button
             key={action.next}
-            variant={isCancel ? "ghost" : "outline"}
+            variant={isCancel ? "ghost" : isPrimary ? "default" : "outline"}
             size="sm"
             className={isCancel ? "text-destructive hover:text-destructive" : ""}
             onClick={() => run(action.next)}

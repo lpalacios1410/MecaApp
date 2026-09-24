@@ -72,6 +72,20 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- order_steps (checklist de avance de una orden)
+-- Se siembra desde plans.services al crear la orden (snapshot, como plan_name)
+-- y el mecanico puede anadir/quitar/marcar puntos mientras la orden este
+-- aceptada o en curso. El cliente lo ve en modo lectura.
+CREATE TABLE IF NOT EXISTS order_steps (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  done BOOLEAN NOT NULL DEFAULT FALSE,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ============================================
 -- 2. INDICES
 -- ============================================
@@ -82,6 +96,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_mechanic_created_at ON orders(mechanic_id,
 CREATE INDEX IF NOT EXISTS idx_orders_plan_id ON orders(plan_id);
 CREATE INDEX IF NOT EXISTS idx_plans_vehicle_sort ON plans(vehicle_type, sort_order);
 CREATE INDEX IF NOT EXISTS idx_plans_active ON plans(is_active);
+CREATE INDEX IF NOT EXISTS idx_order_steps_order ON order_steps(order_id, sort_order);
 
 -- ============================================
 -- 3. FUNCIONES
@@ -270,8 +285,106 @@ BEGIN
 END;
 $$;
 
--- Impide borrar un plan con ordenes asociadas.
-CREATE OR REPLACE FUNCTION prevent_plan_delete_with_orders()
+-- Pasos visibles para el cliente dueno, el mecanico asignado y los admins.
+CREATE OR REPLACE FUNCTION is_order_member(p_order_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.orders o
+    WHERE o.id = p_order_id
+      AND (o.client_id = auth.uid() OR o.mechanic_id = auth.uid() OR public.is_admin())
+  );
+$$;
+
+-- Solo el mecanico asignado puede mutar el checklist de su orden.
+CREATE OR REPLACE FUNCTION is_order_mechanic(p_order_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.orders o
+    WHERE o.id = p_order_id AND o.mechanic_id = auth.uid()
+  );
+$$;
+
+-- Siembra el checklist desde los servicios del plan al crear la orden.
+-- SECURITY DEFINER para que el cliente (quien inserta la orden) pueda generar
+-- los pasos indirectamente; el guard de abajo lo limita a ordenes nuevas.
+CREATE OR REPLACE FUNCTION seed_order_steps()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+BEGIN
+  INSERT INTO public.order_steps (order_id, title, sort_order)
+  SELECT NEW.id, s.title, s.ord
+    FROM public.plans p,
+         unnest(p.services) WITH ORDINALITY AS s(title, ord)
+   WHERE p.id::text = NEW.plan_id
+     AND NULLIF(TRIM(s.title), '') IS NOT NULL;
+  RETURN NEW;
+END;
+$$;
+
+-- Guardia del checklist: solo se modifica con la orden aceptada o en curso
+-- (anadir pasos tambien admite 'pending' para el siembra), y sincroniza
+-- completed_at con done. service_role (migraciones) queda exento.
+CREATE OR REPLACE FUNCTION validate_order_step_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  v_status TEXT;
+  v_role TEXT := auth.role();
+BEGIN
+  -- service_role (migraciones/backfill) y SQL Editor (auth.role() NULL) exentos.
+  IF v_role IS NULL OR v_role = 'service_role' THEN
+    RETURN COALESCE(NEW, OLD);
+  END IF;
+
+  SELECT status INTO v_status
+    FROM public.orders
+   WHERE id = COALESCE(NEW.order_id, OLD.order_id);
+
+  IF TG_OP = 'INSERT' THEN
+    IF v_status NOT IN ('pending', 'accepted', 'in_progress') THEN
+      RAISE EXCEPTION 'No se pueden anadir pasos a una orden cerrada';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    IF v_status NOT IN ('pending', 'accepted', 'in_progress') THEN
+      RAISE EXCEPTION 'No se pueden quitar pasos de una orden cerrada';
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  IF v_status NOT IN ('accepted', 'in_progress') THEN
+    RAISE EXCEPTION 'El checklist solo se modifica con la orden aceptada o en curso';
+  END IF;
+
+  NEW.completed_at := CASE
+    WHEN NEW.done THEN COALESCE(OLD.completed_at, NOW())
+    ELSE NULL
+  END;
+  IF NEW.order_id <> OLD.order_id THEN
+    RAISE EXCEPTION 'No se puede mover un paso a otra orden';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- Impide borrar un plan con ordenes asociadas.CREATE OR REPLACE FUNCTION prevent_plan_delete_with_orders()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -347,6 +460,18 @@ CREATE TRIGGER validate_order_status_transition
   FOR EACH ROW
   EXECUTE FUNCTION validate_order_status_transition();
 
+DROP TRIGGER IF EXISTS seed_order_steps ON orders;
+CREATE TRIGGER seed_order_steps
+  AFTER INSERT ON orders
+  FOR EACH ROW
+  EXECUTE FUNCTION seed_order_steps();
+
+DROP TRIGGER IF EXISTS validate_order_step_change ON order_steps;
+CREATE TRIGGER validate_order_step_change
+  BEFORE INSERT OR UPDATE OR DELETE ON order_steps
+  FOR EACH ROW
+  EXECUTE FUNCTION validate_order_step_change();
+
 DROP TRIGGER IF EXISTS prevent_plan_delete_with_orders ON plans;
 CREATE TRIGGER prevent_plan_delete_with_orders
   BEFORE DELETE ON plans
@@ -360,6 +485,7 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_steps ENABLE ROW LEVEL SECURITY;
 
 -- profiles
 DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
@@ -442,6 +568,28 @@ CREATE POLICY "Mechanics can update own orders"
   ON orders FOR UPDATE
   USING (auth.uid() = mechanic_id)
   WITH CHECK (auth.uid() = mechanic_id);
+
+-- order_steps
+DROP POLICY IF EXISTS "Order members can view steps" ON order_steps;
+CREATE POLICY "Order members can view steps"
+  ON order_steps FOR SELECT
+  USING (is_order_member(order_id));
+
+DROP POLICY IF EXISTS "Mechanics can insert own order steps" ON order_steps;
+CREATE POLICY "Mechanics can insert own order steps"
+  ON order_steps FOR INSERT
+  WITH CHECK (is_order_mechanic(order_id));
+
+DROP POLICY IF EXISTS "Mechanics can update own order steps" ON order_steps;
+CREATE POLICY "Mechanics can update own order steps"
+  ON order_steps FOR UPDATE
+  USING (is_order_mechanic(order_id))
+  WITH CHECK (is_order_mechanic(order_id));
+
+DROP POLICY IF EXISTS "Mechanics can delete own order steps" ON order_steps;
+CREATE POLICY "Mechanics can delete own order steps"
+  ON order_steps FOR DELETE
+  USING (is_order_mechanic(order_id));
 
 -- plans
 DROP POLICY IF EXISTS "Authenticated users can view plans" ON plans;
