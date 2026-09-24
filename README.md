@@ -48,7 +48,7 @@ Es un **panel de control automotriz** en modo oscuro: los clientes gestionan sus
 
 ## ⚙️ Configuración (un solo `.env`)
 
-Cada instancia (cliente/empresa) se despliega con el mismo código y **un único archivo `.env`** (ver `.env.example`):
+Cada instancia (cliente/empresa) se despliega con el mismo código y **un único archivo `.env`** (no versionado; crea las variables según esta tabla):
 
 | Variable                                | Required | Descripción                                                       |
 | --------------------------------------- | -------- | ----------------------------------------------------------------- |
