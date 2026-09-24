@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { Bike, Car, Inbox } from "lucide-react";
 import { getClientOrders } from "@/lib/supabase/helpers";
 import { OrderStatusBadge } from "@/components/dashboard/orders/order-status-badge";
+import { OrderStepsProgress } from "@/components/dashboard/orders/order-steps-progress";
 import { DeleteOrderButton } from "@/components/dashboard/orders/delete-order-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,6 +92,15 @@ export default async function ClientOrdersPage({
                       </p>
                     )}
                   </div>
+                  {order.status !== "pending" && order.steps.length > 0 && (
+                    <OrderStepsProgress
+                      steps={order.steps}
+                      showTimes={
+                        order.status === "in_progress" ||
+                        order.status === "completed"
+                      }
+                    />
+                  )}
                   {order.status === "pending" && (
                     <div className="flex justify-end border-t border-border pt-3">
                       <DeleteOrderButton

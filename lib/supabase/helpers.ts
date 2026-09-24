@@ -67,10 +67,19 @@ interface OrderProfileBrief {
   email: string;
 }
 
+export interface OrderStepRow {
+  id: string;
+  title: string;
+  done: boolean;
+  sort_order: number;
+  completed_at: string | null;
+}
+
 export interface OrderWithDetails extends OrderRow {
   vehicle: OrderVehicleBrief | null;
   client: OrderProfileBrief | null;
   mechanic: OrderProfileBrief | null;
+  steps: OrderStepRow[];
 }
 
 export interface Page<T> {
@@ -339,22 +348,41 @@ async function attachOrderDetails(
   }
 
   const vehicleIds = [...new Set(orders.map((o) => o.vehicle_id))];
+  const orderIds = orders.map((o) => o.id);
   const profileIds = [
     ...new Set(orders.flatMap((o) => [o.client_id, o.mechanic_id])),
   ];
 
-  const [vehiclesRes, profilesRes] = await Promise.all([
+  const [vehiclesRes, profilesRes, stepsRes] = await Promise.all([
     supabase.from("vehicles").select("id, brand, model, plate").in("id", vehicleIds),
     supabase.from("profiles").select("id, full_name, email").in("id", profileIds),
+    supabase
+      .from("order_steps")
+      .select("id, title, done, sort_order, completed_at, order_id")
+      .in("order_id", orderIds)
+      .order("sort_order", { ascending: true }),
   ]);
 
-  if (vehiclesRes.error || profilesRes.error) {
-    fail("attachOrderDetails", vehiclesRes.error ?? profilesRes.error);
+  if (vehiclesRes.error || profilesRes.error || stepsRes.error) {
+    fail("attachOrderDetails", vehiclesRes.error ?? profilesRes.error ?? stepsRes.error);
   }
 
   const vehiclesById = new Map<string, OrderVehicleBrief>();
   for (const vehicle of (vehiclesRes.data as OrderVehicleBrief[] | null) || []) {
     vehiclesById.set(vehicle.id, vehicle);
+  }
+
+  const stepsByOrder = new Map<string, OrderStepRow[]>();
+  for (const step of (stepsRes.data as (OrderStepRow & { order_id: string })[] | null) || []) {
+    const list = stepsByOrder.get(step.order_id) ?? [];
+    list.push({
+      id: step.id,
+      title: step.title,
+      done: step.done,
+      sort_order: step.sort_order,
+      completed_at: step.completed_at,
+    });
+    stepsByOrder.set(step.order_id, list);
   }
 
   const profilesById = new Map<string, OrderProfileBrief>();
@@ -368,6 +396,7 @@ async function attachOrderDetails(
     vehicle: vehiclesById.get(order.vehicle_id) ?? null,
     client: profilesById.get(order.client_id) ?? null,
     mechanic: profilesById.get(order.mechanic_id) ?? null,
+    steps: stepsByOrder.get(order.id) ?? [],
   }));
 }
 
@@ -379,17 +408,27 @@ async function getOrdersPage(
   scope: string,
   column: "client_id" | "mechanic_id",
   page: number,
-  pageSize: number
+  pageSize: number,
+  statusFilter?: { eq?: OrderStatus; neq?: OrderStatus }
 ): Promise<Page<OrderWithDetails>> {
   const { supabase, userId } = await getUserId();
   const safePage = normalizePage(page);
   const safeSize = pageSize > 0 ? Math.trunc(pageSize) : DEFAULT_PAGE_SIZE;
   const from = (safePage - 1) * safeSize;
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from("orders")
     .select(ORDER_COLUMNS, { count: "exact" })
-    .eq(column, userId)
+    .eq(column, userId);
+
+  if (statusFilter?.eq) {
+    query = query.eq("status", statusFilter.eq);
+  }
+  if (statusFilter?.neq) {
+    query = query.neq("status", statusFilter.neq);
+  }
+
+  const { data, error, count } = await query
     .order("created_at", { ascending: false })
     .range(from, from + safeSize - 1);
 
@@ -420,7 +459,18 @@ export function getMechanicOrders(
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE
 ): Promise<Page<OrderWithDetails>> {
-  return getOrdersPage("getMechanicOrders", "mechanic_id", page, pageSize);
+  return getOrdersPage("getMechanicOrders", "mechanic_id", page, pageSize, {
+    neq: "in_progress",
+  });
+}
+
+export function getMechanicActiveOrders(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE
+): Promise<Page<OrderWithDetails>> {
+  return getOrdersPage("getMechanicActiveOrders", "mechanic_id", page, pageSize, {
+    eq: "in_progress",
+  });
 }
 
 async function countOrders(
@@ -451,22 +501,25 @@ async function countOrders(
 export interface OrderStats {
   total: number;
   pending: number;
+  active: number;
 }
 
 export async function getClientOrdersStats(): Promise<OrderStats> {
-  const [total, pending] = await Promise.all([
+  const [total, pending, active] = await Promise.all([
     countOrders("getClientOrdersStats:total", "client_id"),
     countOrders("getClientOrdersStats:pending", "client_id", "pending"),
+    countOrders("getClientOrdersStats:active", "client_id", "in_progress"),
   ]);
-  return { total, pending };
+  return { total, pending, active };
 }
 
 export async function getMechanicOrdersStats(): Promise<OrderStats> {
-  const [total, pending] = await Promise.all([
+  const [total, pending, active] = await Promise.all([
     countOrders("getMechanicOrdersStats:total", "mechanic_id"),
     countOrders("getMechanicOrdersStats:pending", "mechanic_id", "pending"),
+    countOrders("getMechanicOrdersStats:active", "mechanic_id", "in_progress"),
   ]);
-  return { total, pending };
+  return { total, pending, active };
 }
 
 export interface UserAdminRow {
