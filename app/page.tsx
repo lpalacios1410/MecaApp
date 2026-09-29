@@ -65,15 +65,6 @@ export default function Home() {
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent via-black/60 to-black" />
 
           <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 py-24 text-center">
-            <div className="mb-8 inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-zinc-300 backdrop-blur-sm">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-500 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-500" />
-              </span>
-              Plataforma Web Progresiva (PWA) • Tiempo Real
-              <Zap size={14} className="text-orange-400" />
-            </div>
-
             <h1 className="max-w-4xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl">
               Conectamos propietarios de vehículos con{" "}
               <span className="bg-gradient-to-r from-orange-400 via-orange-500 to-amber-400 bg-clip-text text-transparent">
