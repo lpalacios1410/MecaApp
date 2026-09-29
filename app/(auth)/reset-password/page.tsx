@@ -1,30 +1,23 @@
 import Link from "next/link";
-import { AlertCircle, CheckCircle, Lock, Mail } from "lucide-react";
-import { login } from "./actions";
+import { AlertCircle, Lock } from "lucide-react";
+import { updatePassword } from "./actions";
 import { AuthShell, authInputClass } from "@/components/auth/auth-shell";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default async function LoginPage({
+export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; message?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const { error, message } = await searchParams;
+  const { error } = await searchParams;
 
   return (
     <AuthShell
-      title="Bienvenido de nuevo"
-      description="Inicia sesión para gestionar tus servicios y mecánicos de confianza."
+      title="Nueva contraseña"
+      description="Escribe y confirma tu nueva clave para recuperar el acceso a tu cuenta."
     >
-      {message && (
-        <div className="mb-5 flex items-start gap-2 rounded-lg border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-400">
-          <CheckCircle size={16} className="mt-0.5 shrink-0" />
-          <span>{message}</span>
-        </div>
-      )}
-
       {error && (
         <div className="mb-5 flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
           <AlertCircle size={16} className="mt-0.5 shrink-0" />
@@ -32,31 +25,10 @@ export default async function LoginPage({
         </div>
       )}
 
-      <form action={login} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-zinc-400">
-            Correo electrónico
-          </Label>
-          <div className="relative">
-            <Mail
-              size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
-            />
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="ana@correo.com"
-              required
-              className={`${authInputClass} pl-9`}
-            />
-          </div>
-        </div>
-
+      <form action={updatePassword} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="password" className="text-zinc-400">
-            Contraseña
+            Nueva contraseña
           </Label>
           <div className="relative">
             <Lock
@@ -67,8 +39,8 @@ export default async function LoginPage({
               id="password"
               name="password"
               type="password"
-              autoComplete="current-password"
-              placeholder="••••••••"
+              autoComplete="new-password"
+              placeholder="Mínimo 8 caracteres"
               minLength={8}
               required
               className={`${authInputClass} pl-9`}
@@ -76,25 +48,38 @@ export default async function LoginPage({
           </div>
         </div>
 
-        <div className="flex justify-end">
-          <Link
-            className="text-sm font-medium text-orange-400 underline-offset-4 transition-colors hover:text-orange-300 hover:underline"
-            href="/forgot-password"
-          >
-            ¿Olvidaste tu contraseña?
-          </Link>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword" className="text-zinc-400">
+            Confirmar contraseña
+          </Label>
+          <div className="relative">
+            <Lock
+              size={16}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
+            />
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Repite tu nueva contraseña"
+              minLength={8}
+              required
+              className={`${authInputClass} pl-9`}
+            />
+          </div>
         </div>
 
-        <SubmitButton>Iniciar Sesión</SubmitButton>
+        <SubmitButton>Guardar nueva clave</SubmitButton>
       </form>
 
       <p className="mt-6 text-center text-sm text-zinc-400">
-        ¿Aún no tienes cuenta?{" "}
+        ¿Prefieres cancelar?{" "}
         <Link
           className="font-medium text-orange-400 underline-offset-4 transition-colors hover:text-orange-300 hover:underline"
-          href="/register"
+          href="/login"
         >
-          Regístrate aquí
+          Volver al inicio de sesión
         </Link>
         .
       </p>

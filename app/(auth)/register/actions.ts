@@ -1,9 +1,9 @@
 "use server"
 
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { resolveSiteOrigin } from "@/lib/auth/site-origin"
 import { resolveRoleFromAllowlist } from "@/lib/auth/roles"
 
 export async function signup(formData: FormData) {
@@ -26,21 +26,7 @@ export async function signup(formData: FormData) {
   }
 
   const supabase = await createClient()
-  const headerList = await headers()
-
-  const allowedOrigins = new Set(
-    [
-      process.env.NEXT_PUBLIC_SITE_URL,
-      process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
-      "http://localhost:3000",
-    ].filter((value): value is string => Boolean(value))
-  )
-  const requestOrigin = headerList.get("origin")
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    (requestOrigin && allowedOrigins.has(requestOrigin)
-      ? requestOrigin
-      : "http://localhost:3000")
+  const origin = await resolveSiteOrigin()
 
   const { data, error } = await supabase.auth.signUp({
     email,
